@@ -1,8 +1,56 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<PIA_PD.Models.Libro>
+@{
+    ViewData["Title"] = "Inicio";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="bg-dark text-white text-center py-5 mb-5 shadow-lg">
+    <div class="container py-5">
+        <h1 class="display-3 fw-bold">Encuentra tu próxima gran lectura</h1>
+        <p class="lead mb-4">Explora miles de títulos de nuestra API global. Compra fácil, seguro y recibe tus tickets al instante.</p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+            <a href="#catalogo" class="btn btn-primary btn-lg px-4 gap-3 rounded-pill">Explorar Catálogo</a>
+            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-light btn-lg px-4 rounded-pill">Crear una Cuenta</a>
+        </div>
+    </div>
+</div>
+
+<div id="catalogo" class="container pb-5">
+    <h2 class="text-center mb-4 fw-bold">Títulos Destacados</h2>
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+
+        @if (Model != null && Model.Any())
+        {
+            foreach (var libro in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <img src="@libro.PortadaUrl" class="card-img-top" alt="Portada de @libro.Titulo" style="height: 350px; object-fit: cover;">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-bold text-truncate" title="@libro.Titulo">@libro.Titulo</h5>
+                            <p class="card-text text-muted small mb-1">@libro.Autor</p>
+                            <p class="card-text text-success fw-bold fs-5 mt-auto">$@libro.Precio.ToString("0.00") MXN</p>
+
+                            <form asp-controller="Carrito" asp-action="Agregar" method="post">
+                                <input type="hidden" name="id" value="@libro.Id" />
+                                <input type="hidden" name="titulo" value="@libro.Titulo" />
+                                <input type="hidden" name="precio" value="@libro.Precio" />
+                                <input type="hidden" name="portadaUrl" value="@libro.PortadaUrl" />
+                                <button type="submit" class="btn btn-outline-primary w-100 mt-2">
+                                    <i class="bi bi-cart-plus"></i> Añadir
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12 text-center py-5">
+                <div class="alert alert-warning" role="alert">
+                    No pudimos cargar los libros. Intenta recargar la página.
+                </div>
+            </div>
+        }
+    </div>
 </div>
