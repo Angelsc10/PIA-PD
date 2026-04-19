@@ -1,0 +1,84 @@
+﻿@model IEnumerable<PIA_PD.Models.Venta>
+@{
+    ViewData["Title"] = "Historial de Ventas";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h2 class="fw-bold"><i class="bi bi-receipt me-2"></i>Historial de Ventas</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill shadow-sm"><i class="bi bi-arrow-left me-1"></i> Volver al Panel</a>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info text-center py-5 shadow-sm border-0 rounded">
+            <i class="bi bi-info-circle display-4 d-block mb-3 text-info"></i>
+            <p class="fs-4 fw-bold">Aún no hay ventas registradas.</p>
+            <p>Las compras de los clientes aparecerán aquí automáticamente.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow border-0">
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-hover mb-0 text-center align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Folio</th>
+                            <th>Fecha y Hora</th>
+                            <th>Cliente</th>
+                            <th>Artículos</th>
+                            <th>Total de Venta</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var venta in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-primary">#@venta.Id</td>
+                                <td>@venta.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td><span class="badge bg-secondary rounded-pill px-3 py-2">@venta.Usuario</span></td>
+                                <td>@venta.Detalles.Sum(d => d.Cantidad) libros</td>
+                                <td class="text-success fw-bold fs-5">$@venta.Total.ToString("0.0000")</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-dark rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#detalles-@venta.Id" aria-expanded="false">
+                                        <i class="bi bi-eye"></i> Ver Libros
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="collapse bg-light" id="detalles-@venta.Id">
+                                <td colspan="6" class="p-0 border-0">
+                                    <div class="p-4 border-bottom shadow-inner">
+                                        <h6 class="fw-bold text-start mb-3 text-muted"><i class="bi bi-box-seam me-2"></i>Desglose del Folio #@venta.Id</h6>
+                                        <table class="table table-sm table-bordered bg-white mb-0 text-start shadow-sm">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Título del Libro</th>
+                                                    <th class="text-center" style="width: 100px;">Cant.</th>
+                                                    <th class="text-end" style="width: 150px;">Precio Unit.</th>
+                                                    <th class="text-end" style="width: 150px;">Subtotal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var detalle in venta.Detalles)
+                                                {
+                                                    <tr>
+                                                        <td>@detalle.Titulo</td>
+                                                        <td class="text-center">@detalle.Cantidad</td>
+                                                        <td class="text-end">$@detalle.PrecioUnitario.ToString("0.0000")</td>
+                                                        <td class="text-end fw-bold">$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("0.0000"))</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

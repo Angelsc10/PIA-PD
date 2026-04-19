@@ -2,11 +2,26 @@
     ViewData["Title"] = "Panel de Control";
 }
 
-<div class="container mt-5">
+<div class="container mt-5 mb-5">
     <div class="row mb-4">
         <div class="col">
-            <h1 class="fw-bold"><i class="bi bi-speedometer2 me-2"></i>Panel de Control</h1>
-            <p class="text-muted">Bienvenido al sistema de gestión interno.</p>
+            <h1 class="fw-bold text-dark"><i class="bi bi-speedometer2 me-2"></i>Dashboard Administrativo</h1>
+            <p class="text-muted">Resumen financiero y gestión del Rincón del Libro.</p>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-white">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4 border-bottom pb-2">
+                        <i class="bi bi-graph-up-arrow text-primary me-2"></i>Ingresos de los últimos 7 días
+                    </h5>
+                    <div style="position: relative; height:40vh; width:100%">
+                        <canvas id="graficaVentas"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -14,37 +29,92 @@
         @if (User.IsInRole("Admin"))
         {
             <div class="col-md-4">
-                <div class="card shadow-sm border-0 bg-primary text-white h-100">
+                <div class="card shadow-sm border-0 bg-primary text-white h-100 transition-hover">
                     <div class="card-body text-center py-5">
                         <i class="bi bi-people-fill display-1 mb-3"></i>
                         <h3 class="card-title fw-bold">Empleados</h3>
                         <p class="card-text">Dar de alta o baja al personal.</p>
-                        <button class="btn btn-light rounded-pill px-4 mt-2 fw-bold text-primary">Gestionar</button>
+                        <a asp-action="Empleados" class="btn btn-light rounded-pill px-4 mt-2 fw-bold text-primary shadow-sm">Gestionar Staff</a>
                     </div>
                 </div>
             </div>
         }
 
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 bg-success text-white h-100">
+            <div class="card shadow-sm border-0 bg-success text-white h-100 transition-hover">
                 <div class="card-body text-center py-5">
                     <i class="bi bi-box-seam display-1 mb-3"></i>
                     <h3 class="card-title fw-bold">Inventario Local</h3>
                     <p class="card-text">Base de datos de libros físicos.</p>
-                    <button class="btn btn-light rounded-pill px-4 mt-2 fw-bold text-success">Ver Stock</button>
+                    <a asp-controller="Inventario" asp-action="Index" class="btn btn-light rounded-pill px-4 mt-2 fw-bold text-success shadow-sm">Ver Stock</a>
                 </div>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 bg-dark text-white h-100">
+            <div class="card shadow-sm border-0 bg-dark text-white h-100 transition-hover">
                 <div class="card-body text-center py-5">
                     <i class="bi bi-receipt display-1 mb-3"></i>
                     <h3 class="card-title fw-bold">Historial de Ventas</h3>
                     <p class="card-text">Registro de los tickets generados.</p>
-                    <button class="btn btn-light rounded-pill px-4 mt-2 fw-bold text-dark">Consultar</button>
+                    <a asp-action="Ventas" class="btn btn-light rounded-pill px-4 mt-2 fw-bold text-dark shadow-sm">Consultar Caja</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Le pedimos a tu C# los datos procesados de MySQL
+            fetch('/Admin/GetDatosVentas')
+                .then(response => response.json())
+                .then(data => {
+                    // Extraemos las fechas y los totales
+                    const etiquetas = data.map(d => d.fecha);
+                    const valores = data.map(d => d.total);
+
+                    // Configuramos y dibujamos la gráfica
+                    const ctx = document.getElementById('graficaVentas').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line', // Puedes cambiar a 'bar' si prefieres gráfica de barras
+                        data: {
+                            labels: etiquetas,
+                            datasets: [{
+                                label: 'Ingresos Diarios ($ MXN)',
+                                data: valores,
+                                borderColor: '#0d6efd',       // Color azul Bootstrap
+                                backgroundColor: 'rgba(13, 110, 253, 0.2)', // Fondo azul transparente
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4, // Hace que la línea sea curva y elegante
+                                pointRadius: 5,
+                                pointHoverRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: true, position: 'top' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return ' $' + context.parsed.y.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, suggestedMax: 500 }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error("Error al cargar la gráfica:", error));
+        });
+    </script>
+}

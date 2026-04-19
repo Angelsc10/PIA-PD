@@ -1,110 +1,118 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PIA_PD.Models;
 using PIA_PD.Extensions;
+using PIA_PD.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace PIA_PD.Controllers
 {
     public class CarritoController : Controller
     {
-        // Ver el carrito completo
+        private readonly ApplicationDbContext _context;
+
+        public CarritoController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
         public IActionResult Index()
         {
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
             return View(carrito);
         }
 
-        // Agregar al carrito
         [HttpPost]
-        public IActionResult Agregar(string id, string titulo, decimal precio, string portadaUrl)
+        public async Task<IActionResult> Agregar(string id, string titulo, decimal precio, string portadaUrl)
         {
+            // Verificamos si el libro es local y si tiene stock
+            var libroDb = await _context.LibrosInternos.FindAsync(id);
+            if (libroDb != null && libroDb.Stock <= 0)
+            {
+                TempData["Error"] = "Lo sentimos, este libro se ha agotado en bodega.";
+                return RedirectToAction("Index", "Home");
+            }
+
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
             var itemExistente = carrito.FirstOrDefault(i => i.LibroId == id);
 
             if (itemExistente != null)
-            {
                 itemExistente.Cantidad++;
-            }
             else
-            {
-                carrito.Add(new CarritoItem
-                {
-                    LibroId = id,
-                    Titulo = titulo,
-                    Precio = precio,
-                    PortadaUrl = portadaUrl,
-                    Cantidad = 1
-                });
-            }
+                carrito.Add(new CarritoItem { LibroId = id, Titulo = titulo, Precio = precio, PortadaUrl = portadaUrl, Cantidad = 1 });
 
             HttpContext.Session.Set("MiCarrito", carrito);
+            TempData["Exito"] = $"¡{titulo} agregado al carrito!";
             return RedirectToAction("Index", "Home");
         }
 
-        // Eliminar un libro del carrito
         public IActionResult Eliminar(string id)
         {
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
             var item = carrito.FirstOrDefault(i => i.LibroId == id);
-
-            if (item != null)
-            {
-                carrito.Remove(item);
-            }
-
+            if (item != null) carrito.Remove(item);
             HttpContext.Session.Set("MiCarrito", carrito);
             return RedirectToAction("Index");
         }
 
-        // Procesar la compra y generar Ticket TXT
-        [HttpPost]
-        public IActionResult ProcesarPago()
+        [HttpGet]
+        public IActionResult Confirmar()
         {
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito");
+            if (carrito == null || !carrito.Any()) return RedirectToAction("Index");
+            return View(carrito);
+        }
 
-            // Si el carrito está vacío por alguna razón, lo regresamos a la página
-            if (carrito == null || !carrito.Any())
+        [HttpPost]
+        public async Task<IActionResult> ProcesarPago(string? email)
+        {
+            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito");
+            if (carrito == null || !carrito.Any()) return RedirectToAction("Index");
+
+            decimal totalVenta = carrito.Sum(i => i.Precio * i.Cantidad);
+
+            var nuevaVenta = new Venta
             {
-                return RedirectToAction("Index");
+                Usuario = User.Identity?.IsAuthenticated == true ? User.Identity.Name : "Cliente Anónimo",
+                Email = email,
+                Fecha = DateTime.Now,
+                Total = totalVenta
+            };
+
+            foreach (var item in carrito)
+            {
+                // ACTUALIZACIÓN DE STOCK EN MYSQL
+                var libroDb = await _context.LibrosInternos.FindAsync(item.LibroId);
+                if (libroDb != null)
+                {
+                    libroDb.Stock -= item.Cantidad;
+                    if (libroDb.Stock < 0) libroDb.Stock = 0; // Seguridad
+                }
+
+                nuevaVenta.Detalles.Add(new DetalleVenta
+                {
+                    LibroId = item.LibroId,
+                    Titulo = item.Titulo,
+                    PrecioUnitario = item.Precio,
+                    Cantidad = item.Cantidad
+                });
             }
 
-            // 1. Armar el diseño del ticket en texto plano
+            _context.Ventas.Add(nuevaVenta);
+            await _context.SaveChangesAsync();
+
+            // Generar Ticket
             var ticket = new System.Text.StringBuilder();
             ticket.AppendLine("========================================");
             ticket.AppendLine("           EL RINCÓN DEL LIBRO          ");
-            ticket.AppendLine("            TICKET DE COMPRA            ");
+            ticket.AppendLine($"         Folio de Venta: #{nuevaVenta.Id}       ");
             ticket.AppendLine("========================================");
-            ticket.AppendLine($"Fecha de emisión: {DateTime.Now:dd/MM/yyyy HH:mm:ss}");
-            ticket.AppendLine($"Atendido por: Web Automatizada");
-            ticket.AppendLine("----------------------------------------");
-            ticket.AppendLine("CANT | PRODUCTO                 | SUBTOT");
-            ticket.AppendLine("----------------------------------------");
-
-            decimal totalVenta = 0;
-            foreach (var item in carrito)
-            {
-                decimal subtotal = item.Precio * item.Cantidad;
-                totalVenta += subtotal;
-
-                // Formateamos para que se vea como una columna de ticket (cortamos títulos largos)
-                string tituloCorto = item.Titulo.Length > 20 ? item.Titulo.Substring(0, 20) + "..." : item.Titulo.PadRight(23);
-                ticket.AppendLine($" {item.Cantidad:00}  | {tituloCorto}| ${subtotal.ToString("0.00").PadLeft(6)}");
-            }
-
-            ticket.AppendLine("----------------------------------------");
-            ticket.AppendLine($"                       TOTAL: ${totalVenta.ToString("0.00")}");
-            ticket.AppendLine("========================================");
-            ticket.AppendLine("   ¡Gracias por su preferencia e        ");
-            ticket.AppendLine("   incentivar la lectura con nosotros!  ");
+            ticket.AppendLine($"Cliente: {nuevaVenta.Usuario}");
+            ticket.AppendLine($"Total: ${totalVenta.ToString("0.0000")}");
             ticket.AppendLine("========================================");
 
-            // 2. Limpiar el carrito de la memoria para que vuelva a quedar en cero
             HttpContext.Session.Remove("MiCarrito");
-
-            // 3. Convertir el texto a un archivo descargable
             var bytes = System.Text.Encoding.UTF8.GetBytes(ticket.ToString());
-            string nombreArchivo = $"Ticket_Compra_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
-
-            return File(bytes, "text/plain", nombreArchivo);
+            return File(bytes, "text/plain", $"Ticket_{nuevaVenta.Id}.txt");
         }
     }
 }

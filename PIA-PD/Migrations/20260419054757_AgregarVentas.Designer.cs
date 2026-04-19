@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PIA_PD.Data;
 
@@ -11,9 +12,11 @@ using PIA_PD.Data;
 namespace PIA_PD.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260419054757_AgregarVentas")]
+    partial class AgregarVentas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -234,7 +237,7 @@ namespace PIA_PD.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<decimal>("PrecioUnitario")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
@@ -264,7 +267,7 @@ namespace PIA_PD.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<decimal>("Precio")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
@@ -283,14 +286,11 @@ namespace PIA_PD.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Email")
-                        .HasColumnType("longtext");
-
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime(6)");
 
                     b.Property<decimal>("Total")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("Usuario")
                         .IsRequired()

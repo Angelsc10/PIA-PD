@@ -1,0 +1,46 @@
+﻿@model PIA_PD.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow border-0 p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-person-lock display-1 text-primary"></i>
+                    <h2 class="fw-bold">Bienvenido de nuevo</h2>
+                    <p class="text-muted">Ingresa con tu nombre de usuario</p>
+                </div>
+
+                <form asp-action="Login" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="UserName" class="form-control" placeholder="Usuario" />
+                        <label asp-for="UserName">Nombre de Usuario</label>
+                        <span asp-validation-for="UserName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="form-floating mb-4">
+                        <input asp-for="Password" class="form-control" placeholder="Contraseña" />
+                        <label asp-for="Password">Contraseña</label>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm">
+                        Entrar a mi cuenta
+                    </button>
+                </form>
+
+                <div class="text-center mt-4 border-top pt-3">
+                    <p class="text-muted small">¿No tienes cuenta? <a asp-action="Register" class="text-decoration-none fw-bold">Regístrate aquí</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

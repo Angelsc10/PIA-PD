@@ -10,66 +10,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - El Rincón del Libro</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/PIA_PD.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-book-half me-2"></i>El Rincón del Libro
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">El Rincón del Libro</a>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a></li>
                         @if (User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.IsInRole("Empleado")))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-warning fw-bold ms-3" asp-controller="Admin" asp-action="Index">
-                                    <i class="bi bi-shield-lock-fill"></i> Panel Staff
-                                </a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link text-warning fw-bold" asp-controller="Admin" asp-action="Index">Panel Staff</a></li>
                         }
                     </ul>
-
                     <ul class="navbar-nav align-items-center">
                         @{
                             var carritoActual = HttpContextAccessor.HttpContext?.Session?.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
                             int totalItems = carritoActual.Sum(i => i.Cantidad);
                         }
-                        <li class="nav-item">
-                            <a class="nav-link text-white fw-bold me-3" asp-controller="Carrito" asp-action="Index">
-                                <i class="bi bi-cart3"></i> Carrito (@totalItems)
-                            </a>
-                        </li>
-
+                        <li class="nav-item"><a class="nav-link text-white fw-bold me-3" asp-controller="Carrito" asp-action="Index"><i class="bi bi-cart3"></i> (@totalItems)</a></li>
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item">
-                                <span class="nav-link text-light border-end pe-3 me-2"><i class="bi bi-person-circle"></i> @User.Identity.Name</span>
-                            </li>
-                            <li class="nav-item">
-                                <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                    <button type="submit" class="nav-link btn btn-link text-danger fw-bold">Cerrar Sesión</button>
-                                </form>
-                            </li>
+                            <li class="nav-item"><span class="nav-link text-light me-2">@User.Identity.Name</span></li>
+                            <li class="nav-item"><form asp-controller="Account" asp-action="Logout" method="post"><button type="submit" class="btn btn-link text-danger fw-bold shadow-none border-0">Salir</button></form></li>
                         }
                         else
                         {
-                            <li class="nav-item">
-                                <a class="nav-link btn btn-outline-light px-3 rounded-pill" asp-area="Identity" asp-page="/Account/Login">Iniciar Sesión</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link btn btn-primary ms-2 px-3 rounded-pill text-white" asp-area="Identity" asp-page="/Account/Register">Crear Cuenta</a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link btn btn-outline-light px-3 rounded-pill" asp-controller="Account" asp-action="Login">Entrar</a></li>
                         }
                     </ul>
                 </div>
@@ -77,19 +47,28 @@
         </nav>
     </header>
 
-    <main role="main" class="pb-3">
-        @RenderBody()
-    </main>
+    <main role="main" class="pb-3 flex-grow-1">@RenderBody()</main>
 
-    <footer class="border-top footer text-muted bg-light mt-auto">
-        <div class="container py-3">
-            &copy; 2026 - El Rincón del Libro - <a asp-area="" asp-controller="Home" asp-action="Privacy">Aviso de Privacidad</a>
-        </div>
-    </footer>
+    <button class="btn btn-primary rounded-circle shadow-lg position-fixed d-flex justify-content-center align-items-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#chatbotOffcanvas" style="bottom: 30px; right: 30px; width: 65px; height: 65px; z-index: 1000;"><i class="bi bi-robot fs-2"></i></button>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // Lógica de Notificaciones Elegantes
+        $(document).ready(function() {
+            var exito = '@TempData["Exito"]';
+            var error = '@TempData["Error"]';
+
+            if (exito) {
+                Swal.fire({ icon: 'success', title: '¡Éxito!', text: exito, timer: 2500, showConfirmButton: false });
+            }
+            if (error) {
+                Swal.fire({ icon: 'error', title: 'Atención', text: error });
+            }
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
