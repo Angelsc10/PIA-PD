@@ -3,7 +3,7 @@
     ViewData["Title"] = "Catálogo de Libros";
     string busquedaActual = ViewBag.Busqueda as string;
     string categoriaActual = ViewBag.CategoriaActual as string;
-    List<string> categorias = ViewBag.Categorias as List<string>;
+    List<string> categorias = ViewBag.Categorias as List<string> ?? new List<string>();
 }
 
 <div class="bg-dark text-white py-5 mb-4 shadow" style="background: linear-gradient(135deg, #1e1e1e 0%, #3a3a3a 100%);">
@@ -66,11 +66,6 @@
                         <div class="col">
                             <div class="card h-100 shadow-sm border-0 position-relative transition-hover">
 
-                                @if (libro.Stock <= 0 && !libro.Id.StartsWith("OL"))
-                                {
-                                    <span class="position-absolute top-0 start-0 badge bg-danger m-2 py-2 px-3 shadow" style="z-index: 10;">Agotado</span>
-                                }
-
                                 @if (User.Identity.IsAuthenticated)
                                 {
                                     <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
@@ -96,24 +91,12 @@
                                     <div class="mt-auto">
                                         <h5 class="text-primary fw-bold mb-3">$@libro.Precio.ToString("0.00")</h5>
 
-                                        @if (libro.Stock > 0 || libro.Id.StartsWith("OL"))
-                                        {
-                                            <form asp-controller="Carrito" asp-action="Agregar" method="post">
-                                                <input type="hidden" name="id" value="@libro.Id" />
-                                                <input type="hidden" name="titulo" value="@libro.Titulo" />
-                                                <input type="hidden" name="precio" value="@libro.Precio" />
-                                                <input type="hidden" name="portadaUrl" value="@libro.PortadaUrl" />
-                                                <button type="submit" class="btn btn-primary rounded-pill w-100 shadow-sm mb-2">
-                                                    <i class="bi bi-cart-plus me-2"></i>Agregar
-                                                </button>
-                                            </form>
-                                        }
-                                        else
-                                        {
-                                            <button class="btn btn-secondary disabled rounded-pill w-100 mb-2">No disponible</button>
-                                        }
+                                        <button type="button" onclick="addToCart('@libro.Id', '@Html.Raw(libro.Titulo.Replace("'", "\\'"))', @libro.Precio, '@libro.PortadaUrl')" class="btn btn-primary rounded-pill w-100 shadow-sm mb-2">
+                                            <i class="bi bi-cart-plus me-2"></i>Agregar al Carrito
+                                        </button>
+
                                         <a asp-action="Detalles" asp-route-id="@libro.Id" class="btn btn-outline-dark rounded-pill w-100">
-                                            <i class="bi bi-star-fill text-warning me-1"></i> Ver Detalles
+                                            <i class="bi bi-star-fill text-warning me-1"></i> Ver Reseñas
                                         </a>
                                     </div>
                                 </div>
@@ -121,6 +104,20 @@
                         </div>
                     }
                 </div>
+
+                @if (ViewBag.TotalPaginas > 1)
+                {
+                    <nav class="mt-5">
+                        <ul class="pagination justify-content-center">
+                            @for (int i = 1; i <= ViewBag.TotalPaginas; i++)
+                            {
+                                <li class="page-item @(i == ViewBag.PaginaActual ? "active" : "")">
+                                    <a class="page-link shadow-sm" href="@Url.Action("Index", new { pagina = i, q = ViewBag.Busqueda, categoria = ViewBag.CategoriaActual })">@i</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
             }
         </div>
     </div>

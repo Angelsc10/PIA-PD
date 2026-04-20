@@ -1,79 +1,53 @@
 ﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityUser>
 @{
-    ViewData["Title"] = "Gestión de Empleados";
+    ViewData["Title"] = "Nómina de Staff";
 }
 
-<div class="container mt-5 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <h2 class="fw-bold text-primary"><i class="bi bi-people-fill me-2"></i>Recursos Humanos</h2>
-        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill shadow-sm"><i class="bi bi-arrow-left me-1"></i> Volver al Panel</a>
-    </div>
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger shadow-sm border-0 alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
+<div class="container mt-5">
     <div class="row g-4">
         <div class="col-md-4">
-            <div class="card shadow border-0 p-4 bg-light h-100">
-                <h4 class="fw-bold mb-3"><i class="bi bi-person-plus me-2 text-success"></i>Nuevo Empleado</h4>
-                <p class="text-muted small">Crea una cuenta oficial para el staff. Tendrán acceso al panel de ventas pero no podrán despedir a nadie.</p>
-
+            <div class="card shadow border-0 p-4 bg-white h-100">
+                <h4 class="fw-bold mb-3"><i class="bi bi-person-plus text-primary me-2"></i>Alta de Personal</h4>
                 <form asp-action="AltaEmpleado" method="post">
-                    <div class="form-floating mb-3 mt-3">
-                        <input type="text" name="username" class="form-control" id="empName" placeholder="Usuario" required>
-                        <label for="empName">Nombre de Usuario</label>
+                    <div class="form-floating mb-3">
+                        <input type="text" name="username" class="form-control" placeholder="Usuario" required>
+                        <label>Nombre de Usuario</label>
                     </div>
                     <div class="form-floating mb-4">
-                        <input type="password" name="password" class="form-control" id="empPass" placeholder="Contraseña" required>
-                        <label for="empPass">Contraseña Segura</label>
+                        <input type="password" name="password" class="form-control" placeholder="Pass" required>
+                        <label>Contraseña Temporal</label>
                     </div>
-                    <button type="submit" class="btn btn-success w-100 rounded-pill shadow">
-                        Contratar y Dar Acceso
-                    </button>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill shadow-sm">Contratar Empleado</button>
                 </form>
             </div>
         </div>
 
         <div class="col-md-8">
-            <div class="card shadow border-0 h-100">
-                <div class="card-body p-0 table-responsive">
-                    <table class="table table-hover mb-0 text-center align-middle">
-                        <thead class="table-primary">
+            <div class="card shadow border-0 h-100 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle text-center">
+                        <thead class="table-dark">
                             <tr>
-                                <th>ID del Sistema</th>
-                                <th>Nombre del Empleado</th>
-                                <th>Gafete</th>
+                                <th>Usuario</th>
+                                <th>Estado</th>
                                 <th>Acción</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @if (!Model.Any())
+                            @foreach (var emp in Model)
                             {
-                                <tr><td colspan="4" class="text-muted py-4">No hay empleados registrados todavía.</td></tr>
-                            }
-                            else
-                            {
-                                foreach (var empleado in Model)
-                                {
-                                    <tr>
-                                        <td class="text-muted small">@empleado.Id.Substring(0, 8)...</td>
-                                        <td class="fw-bold">@empleado.UserName</td>
-                                        <td><span class="badge bg-success rounded-pill"><i class="bi bi-shield-check me-1"></i>Staff</span></td>
-                                        <td>
-                                            <form asp-action="BajaEmpleado" method="post" onsubmit="return confirm('¿Estás seguro de querer dar de baja a @empleado.UserName? Perderá el acceso inmediatamente.');">
-                                                <input type="hidden" name="id" value="@empleado.Id" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                                    <i class="bi bi-person-x"></i> Despedir
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                }
+                                <tr>
+                                    <td class="fw-bold">@emp.UserName</td>
+                                    <td><span class="badge bg-success rounded-pill px-3">Activo</span></td>
+                                    <td>
+                                        <form asp-action="BajaEmpleado" method="post" class="form-eliminar">
+                                            <input type="hidden" name="id" value="@emp.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                <i class="bi bi-person-x"></i> Baja
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
                             }
                         </tbody>
                     </table>

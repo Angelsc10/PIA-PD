@@ -7,6 +7,7 @@ namespace PIA_PD.Services
     public class LibroApiService
     {
         private readonly HttpClient _httpClient;
+        private static readonly Random _random = new Random(); // Generador de Stock
 
         public LibroApiService(HttpClient httpClient)
         {
@@ -18,12 +19,10 @@ namespace PIA_PD.Services
             return await ExtraerLibrosDeSujeto("fiction");
         }
 
-        // NUEVO: Buscador por Categorías Exactas
         public async Task<List<Libro>> ObtenerLibrosPorCategoriaAsync(string categoria)
         {
             if (string.IsNullOrWhiteSpace(categoria)) return new List<Libro>();
 
-            // Traducimos el español del menú a los temas oficiales de la API
             string subject = categoria.ToLower() switch
             {
                 "romance" => "romance",
@@ -37,13 +36,12 @@ namespace PIA_PD.Services
             return await ExtraerLibrosDeSujeto(subject);
         }
 
-        // Función auxiliar para no repetir código al leer la API por temas
         private async Task<List<Libro>> ExtraerLibrosDeSujeto(string subject)
         {
             var libros = new List<Libro>();
             try
             {
-                var response = await _httpClient.GetAsync($"https://openlibrary.org/subjects/{subject}.json?limit=12");
+                var response = await _httpClient.GetAsync($"https://openlibrary.org/subjects/{subject}.json?limit=40");
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -60,7 +58,8 @@ namespace PIA_PD.Services
                                     ? authors[0].GetProperty("name").GetString() ?? "Anónimo" : "Anónimo",
                             PortadaUrl = work.TryGetProperty("cover_id", out var id)
                                 ? $"https://covers.openlibrary.org/b/id/{id}-M.jpg" : "https://via.placeholder.com/300x400?text=Sin+Portada",
-                            Precio = 250.00m
+                            Precio = 250.00m,
+                            Stock = _random.Next(1, 15) // Magia: Le asignamos de 1 a 15 unidades al azar
                         });
                     }
                 }
@@ -75,7 +74,7 @@ namespace PIA_PD.Services
             if (string.IsNullOrWhiteSpace(query)) return libros;
             try
             {
-                var response = await _httpClient.GetAsync($"https://openlibrary.org/search.json?q={Uri.EscapeDataString(query)}&limit=12");
+                var response = await _httpClient.GetAsync($"https://openlibrary.org/search.json?q={Uri.EscapeDataString(query)}&limit=30");
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -91,7 +90,8 @@ namespace PIA_PD.Services
                             Autor = d.TryGetProperty("author_name", out var authors) ? authors[0].GetString() ?? "Anónimo" : "Anónimo",
                             PortadaUrl = d.TryGetProperty("cover_i", out var coverId)
                                 ? $"https://covers.openlibrary.org/b/id/{coverId}-M.jpg" : "https://via.placeholder.com/300x400?text=Sin+Portada",
-                            Precio = 299.90m
+                            Precio = 299.90m,
+                            Stock = _random.Next(1, 10) // Magia en el buscador también
                         });
                     }
                 }
@@ -100,6 +100,7 @@ namespace PIA_PD.Services
             return libros;
         }
 
+        // El método ObtenerLibroPorIdAsync se queda igual
         public async Task<Libro?> ObtenerLibroPorIdAsync(string id)
         {
             try

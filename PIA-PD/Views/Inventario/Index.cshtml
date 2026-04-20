@@ -1,76 +1,55 @@
 ﻿@model IEnumerable<PIA_PD.Models.Libro>
 @{
-    ViewData["Title"] = "Inventario Local";
+    ViewData["Title"] = "Gestión de Stock";
 }
 
-<div class="container mt-5 mb-5">
-
-    @if (TempData["Exito"] != null)
-    {
-        <div class="alert alert-success shadow-sm border-0 alert-dismissible fade show mb-4" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i> @TempData["Exito"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="container mt-5">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-box-seam text-success me-2"></i>Control de Inventario</h3>
+            <a asp-action="Crear" class="btn btn-success rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-lg me-2"></i>Agregar Nuevo Título
+            </a>
         </div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger shadow-sm border-0 alert-dismissible fade show mb-4" role="alert">
-            <i class="bi bi-exclamation-octagon-fill me-2"></i> @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <h2 class="fw-bold text-success"><i class="bi bi-box-seam me-2"></i>Bodega de Libros</h2>
-        <div>
-            <a asp-action="Crear" class="btn btn-success rounded-pill shadow-sm me-2"><i class="bi bi-plus-lg me-1"></i> Agregar Libro Nuevo</a>
-            <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-secondary rounded-pill shadow-sm"><i class="bi bi-arrow-left me-1"></i> Panel</a>
-        </div>
-    </div>
-
-    <div class="card shadow border-0">
-        <div class="card-body p-0 table-responsive">
-            <table class="table table-hover mb-0 text-center align-middle">
-                <thead class="table-success">
-                    <tr>
-                        <th>Portada</th>
-                        <th>Código (ID)</th>
-                        <th>Título</th>
-                        <th>Autor</th>
-                        <th>Precio Público</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.Any())
-                    {
-                        <tr><td colspan="6" class="text-muted py-5">El inventario físico está vacío. ¡Empieza a agregar libros!</td></tr>
-                    }
-                    else
-                    {
-                        foreach (var libro in Model)
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Vista</th>
+                            <th>Título</th>
+                            <th>Autor</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var libro in Model)
                         {
                             <tr>
-                                <td>
-                                    <img src="@libro.PortadaUrl" alt="Portada" class="img-thumbnail shadow-sm" style="height: 60px; width: 45px; object-fit: cover;">
-                                </td>
-                                <td class="text-muted small">@libro.Id.Substring(0, 8)...</td>
+                                <td><img src="@libro.PortadaUrl" style="width: 45px; height: 60px; object-fit: cover;" class="rounded shadow-sm"></td>
                                 <td class="fw-bold">@libro.Titulo</td>
-                                <td>@libro.Autor</td>
-                                <td class="text-success fw-bold">$@libro.Precio.ToString("0.00")</td>
+                                <td class="text-muted">@libro.Autor</td>
+                                <td class="fw-bold text-success">$@libro.Precio.ToString("0.00")</td>
                                 <td>
-                                    <form asp-action="Eliminar" method="post" onsubmit="return confirm('¿Seguro que deseas eliminar este libro del inventario?');">
+                                    <span class="badge @(libro.Stock < 5 ? "bg-danger" : "bg-dark") rounded-pill px-3 py-2">
+                                        @libro.Stock unidades
+                                    </span>
+                                </td>
+                                <td>
+                                    <form asp-action="Eliminar" method="post" class="form-eliminar d-inline">
                                         <input type="hidden" name="id" value="@libro.Id" />
                                         <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                            <i class="bi bi-trash3"></i>
+                                            <i class="bi bi-trash3"></i> Eliminar
                                         </button>
                                     </form>
                                 </td>
                             </tr>
                         }
-                    }
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

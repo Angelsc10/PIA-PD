@@ -25,10 +25,11 @@
             {
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 position-relative transition-hover">
+
                         <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
-                            <form asp-action="Eliminar" method="post" onsubmit="return confirm('¿Quitar de tu lista de deseos?');">
+                            <form asp-action="Eliminar" method="post" class="form-eliminar">
                                 <input type="hidden" name="id" value="@deseo.Id" />
-                                <button type="submit" class="btn btn-light rounded-circle shadow-sm text-danger p-2" title="Quitar">
+                                <button type="submit" class="btn btn-light rounded-circle shadow-sm text-danger p-2" title="Quitar de la lista">
                                     <i class="bi bi-trash-fill"></i>
                                 </button>
                             </form>

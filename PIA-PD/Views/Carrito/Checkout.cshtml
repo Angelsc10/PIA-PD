@@ -1,0 +1,204 @@
+﻿@{
+    ViewData["Title"] = "Finalizar Compra";
+}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 overflow-hidden" style="border-radius: 15px;">
+                <div class="card-header bg-dark text-white text-center py-4">
+                    <h2 class="fw-bold mb-0"><i class="bi bi-shield-lock-fill text-success me-2"></i>Pasarela de Pago Segura</h2>
+                    <p class="mb-0 text-light opacity-75 small mt-1">Tu información está encriptada de extremo a extremo</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+
+                    <div class="progress mb-5" style="height: 12px; border-radius: 10px;">
+                        <div id="progreso" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 33%;"></div>
+                    </div>
+
+                    <form id="checkoutForm" asp-action="FinalizarCompra" method="post">
+
+                        <div id="step1">
+                            <h4 class="fw-bold mb-4 border-bottom pb-2 text-primary">
+                                <span class="badge bg-primary rounded-circle me-2">1</span>Datos de Contacto
+                            </h4>
+                            <p class="text-muted small mb-4">¿A dónde enviaremos tu recibo y las notificaciones de tu pedido?</p>
+
+                            <div class="form-floating mb-3">
+                                <input type="email" name="Email" class="form-control" placeholder="Email" value="@User.Identity.Name" required>
+                                <label>Correo Electrónico</label>
+                            </div>
+                            <div class="form-floating mb-4">
+                                <input type="tel" name="Telefono" class="form-control" placeholder="Tel" required pattern="[0-9]{10}">
+                                <label>Número de Teléfono Celular (10 dígitos)</label>
+                            </div>
+                            <button type="button" class="btn btn-primary w-100 rounded-pill btn-lg shadow-sm fw-bold" onclick="goToStep(2)">
+                                Siguiente: Dirección de Envío <i class="bi bi-geo-alt-fill ms-2"></i>
+                            </button>
+                        </div>
+
+                        <div id="step2" class="d-none">
+                            <h4 class="fw-bold mb-4 border-bottom pb-2 text-primary">
+                                <span class="badge bg-primary rounded-circle me-2">2</span>Dirección de Envío
+                            </h4>
+                            <p class="text-muted small mb-4">Ingresa el domicilio donde entregaremos tus libros físicos.</p>
+
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <div class="form-floating">
+                                        <input type="text" name="Calle" class="form-control" placeholder="Calle" required>
+                                        <label>Calle, Número Exterior e Interior</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-floating">
+                                        <input type="text" name="CP" class="form-control" placeholder="CP" required pattern="[0-9]{5}">
+                                        <label>Código Postal</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-floating">
+                                        <input type="text" name="Ciudad" class="form-control" placeholder="Ciudad" required>
+                                        <label>Ciudad / Municipio</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-floating">
+                                        <input type="text" name="Estado" class="form-control" placeholder="Estado" required>
+                                        <label>Estado / Provincia</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-3">
+                                <button type="button" class="btn btn-outline-secondary w-50 rounded-pill fw-bold" onclick="goToStep(1)">
+                                    <i class="bi bi-arrow-left me-2"></i>Regresar
+                                </button>
+                                <button type="button" class="btn btn-primary w-50 rounded-pill fw-bold shadow-sm" onclick="goToStep(3)">
+                                    Siguiente: Método de Pago <i class="bi bi-credit-card-fill ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="step3" class="d-none">
+                            <h4 class="fw-bold mb-4 border-bottom pb-2 text-primary">
+                                <span class="badge bg-primary rounded-circle me-2">3</span>Método de Pago
+                            </h4>
+                            <p class="text-muted small mb-4">Selecciona cómo deseas liquidar tu pedido.</p>
+
+                            <div class="list-group mb-5">
+                                <label class="list-group-item d-flex gap-3 py-3 border rounded shadow-sm mb-3 cursor-pointer">
+                                    <input class="form-check-input mt-1" type="radio" name="Metodo" value="Tarjeta" checked onclick="togglePay('formTarjeta')">
+                                    <span class="fw-bold text-dark"><i class="bi bi-credit-card-2-front-fill text-primary me-2"></i> Tarjeta de Crédito o Débito</span>
+                                </label>
+
+                                <div id="formTarjeta" class="p-4 bg-light rounded mb-4 border">
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold text-muted">Nombre del Titular</label>
+                                        <input type="text" class="form-control" placeholder="Ej. Juan Pérez" required id="reqName">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold text-muted">Número de Tarjeta</label>
+                                        <input type="text" class="form-control" placeholder="0000 0000 0000 0000" maxlength="16" required id="reqNum">
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="form-label small fw-bold text-muted">Vencimiento</label>
+                                            <input type="text" class="form-control" placeholder="MM/YY" maxlength="5" required id="reqDate">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small fw-bold text-muted">CVV</label>
+                                            <input type="password" class="form-control" placeholder="123" maxlength="3" required id="reqCvv">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <label class="list-group-item d-flex gap-3 py-3 border rounded shadow-sm mb-3 cursor-pointer">
+                                    <input class="form-check-input mt-1" type="radio" name="Metodo" value="PayPal" onclick="togglePay()">
+                                    <span class="fw-bold text-dark"><i class="bi bi-paypal text-info me-2"></i> Pagar con PayPal</span>
+                                </label>
+
+                                <label class="list-group-item d-flex gap-3 py-3 border rounded shadow-sm cursor-pointer">
+                                    <input class="form-check-input mt-1" type="radio" name="Metodo" value="OXXO" onclick="togglePay()">
+                                    <span class="fw-bold text-dark"><i class="bi bi-shop text-danger me-2"></i> Pago en Efectivo (Generar Ticket OXXO)</span>
+                                </label>
+                            </div>
+
+                            <div class="d-flex gap-3 mt-4">
+                                <button type="button" class="btn btn-outline-secondary w-50 rounded-pill fw-bold" onclick="goToStep(2)">
+                                    <i class="bi bi-arrow-left me-2"></i>Regresar
+                                </button>
+                                <button type="submit" class="btn btn-success w-50 rounded-pill fw-bold shadow-lg py-2" style="font-size: 1.1rem;">
+                                    PAGAR Y FINALIZAR <i class="bi bi-check2-circle ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .cursor-pointer:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+        }
+</style>
+
+<script>
+    // Función para navegar entre los pasos validando los campos
+    function goToStep(s) {
+        // Validación súper sencilla antes de avanzar
+        if (s === 2) {
+            const tel = document.querySelector('input[name="Telefono"]').value;
+            if (!tel || tel.length < 10) {
+                alert("Por favor ingresa un número de teléfono válido de 10 dígitos.");
+                return;
+            }
+        }
+        if (s === 3) {
+            const calle = document.querySelector('input[name="Calle"]').value;
+            const cp = document.querySelector('input[name="CP"]').value;
+            if (!calle || !cp) {
+                alert("Por favor completa los campos de dirección y código postal.");
+                return;
+            }
+        }
+
+        document.getElementById('step1').classList.add('d-none');
+        document.getElementById('step2').classList.add('d-none');
+        document.getElementById('step3').classList.add('d-none');
+
+        document.getElementById('step' + s).classList.remove('d-none');
+
+        // Animamos la barra de progreso
+        document.getElementById('progreso').style.width = (s === 1 ? 33 : s === 2 ? 66 : 100) + '%';
+    }
+
+    // Muestra u oculta los campos de la tarjeta según la opción elegida
+    function togglePay(id) {
+        document.getElementById('formTarjeta').classList.add('d-none');
+
+        // Quitar obligatoriedad a la tarjeta si no está seleccionada
+        document.getElementById('reqName').required = false;
+        document.getElementById('reqNum').required = false;
+        document.getElementById('reqDate').required = false;
+        document.getElementById('reqCvv').required = false;
+
+        if(id) {
+            document.getElementById(id).classList.remove('d-none');
+            document.getElementById('reqName').required = true;
+            document.getElementById('reqNum').required = true;
+            document.getElementById('reqDate').required = true;
+            document.getElementById('reqCvv').required = true;
+        }
+    }
+</script>

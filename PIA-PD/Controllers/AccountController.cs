@@ -6,16 +6,49 @@ namespace PIA_PD.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        public AccountController(SignInManager<IdentityUser> signInManager, UserManager<IdentityUser> userManager)
         {
-            _userManager = userManager;
             _signInManager = signInManager;
+            _userManager = userManager;
         }
 
-        // --- REGISTRO ---
+        [HttpGet]
+        public IActionResult Login() => View();
+
+        [HttpPost]
+        public async Task<IActionResult> Login(LoginViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                // Ponemos "false" por defecto para evitar el error del "RememberMe"
+                var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, false, false);
+
+                if (result.Succeeded)
+                {
+                    // Buscamos por Usuario O por Correo para evitar el Error 500
+                    var user = await _userManager.FindByNameAsync(model.UserName)
+                               ?? await _userManager.FindByEmailAsync(model.UserName);
+
+                    if (user != null)
+                    {
+                        var roles = await _userManager.GetRolesAsync(user);
+                        // Si es Admin o Empleado, se va a su panel
+                        if (roles.Contains("Admin") || roles.Contains("Empleado"))
+                        {
+                            return RedirectToAction("Index", "Admin");
+                        }
+                    }
+                    // Si es cliente, se va a la tienda
+                    return RedirectToAction("Index", "Home");
+                }
+                ModelState.AddModelError(string.Empty, "Intento de inicio de sesión no válido.");
+            }
+            return View(model);
+        }
+
         [HttpGet]
         public IActionResult Register() => View();
 
@@ -24,13 +57,12 @@ namespace PIA_PD.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new IdentityUser { UserName = model.UserName };
+                // CORRECCIÓN: Quitamos el "model.Email" porque tu modelo no lo pide. Se queda en blanco.
+                var user = new IdentityUser { UserName = model.UserName, Email = "" };
                 var result = await _userManager.CreateAsync(user, model.Password);
 
                 if (result.Succeeded)
                 {
-                    // Automáticamente le damos el rol de Cliente/Usuario al registrarse
-                    await _userManager.AddToRoleAsync(user, "Usuario");
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return RedirectToAction("Index", "Home");
                 }
@@ -43,27 +75,6 @@ namespace PIA_PD.Controllers
             return View(model);
         }
 
-        // --- INICIO DE SESIÓN ---
-        [HttpGet]
-        public IActionResult Login() => View();
-
-        [HttpPost]
-        public async Task<IActionResult> Login(LoginViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, isPersistent: false, lockoutOnFailure: false);
-
-                if (result.Succeeded)
-                {
-                    return RedirectToAction("Index", "Home");
-                }
-                ModelState.AddModelError(string.Empty, "Usuario o contraseña incorrectos.");
-            }
-            return View(model);
-        }
-
-        // --- CERRAR SESIÓN ---
         [HttpPost]
         public async Task<IActionResult> Logout()
         {

@@ -1,6 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Http
 @using PIA_PD.Extensions
-@using PIA_PD.Models
 @inject IHttpContextAccessor HttpContextAccessor
 
 <!DOCTYPE html>
@@ -12,68 +11,85 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        .offcanvas-custom {
+            width: 450px !important;
+        }
+        /* Doble arroba para que no marque error en C# */
+        @@media (max-width: 576px) {
+            .offcanvas-custom {
+                width: 100% !important;
+            }
+        }
+
+        .cart-img {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+    </style>
 </head>
-<body class="d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100 bg-light">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3 shadow">
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3 shadow sticky-top">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-book-half me-2"></i>El Rincón del Libro
+                <a class="navbar-brand fw-bold" asp-controller="@(User.IsInRole("Admin") || User.IsInRole("Empleado") ? "Admin" : "Home")" asp-action="Index">
+                    <i class="bi bi-book-half me-2 text-primary"></i>El Rincón del Libro
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a></li>
-                        @if (User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.IsInRole("Empleado")))
+                        @if (User.IsInRole("Admin") || User.IsInRole("Empleado"))
                         {
-                            <li class="nav-item"><a class="nav-link text-warning fw-bold ms-2" asp-controller="Admin" asp-action="Index"><i class="bi bi-shield-lock-fill me-1"></i>Panel Staff</a></li>
+                            <li class="nav-item"><a class="nav-link text-warning fw-bold ms-2" asp-controller="Admin" asp-action="Index">MODO ADMINISTRATIVO</a></li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Catálogo</a></li>
                         }
                     </ul>
                     <ul class="navbar-nav align-items-center">
-                        @{
-                            var carritoActual = HttpContextAccessor.HttpContext?.Session?.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
-                            int totalItems = carritoActual.Sum(i => i.Cantidad);
-                        }
-
-                        @if (User.Identity.IsAuthenticated)
+                        @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
                         {
-                            <li class="nav-item me-2">
-                                <a class="nav-link text-danger fw-bold" asp-controller="Deseos" asp-action="Index" title="Mi Lista de Deseos">
-                                    <i class="bi bi-heart-fill fs-5 align-middle"></i>
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <li class="nav-item me-2">
+                                    <a class="nav-link text-danger fw-bold" asp-controller="Deseos" asp-action="Index" title="Mis Favoritos">
+                                        <i class="bi bi-heart-fill fs-5 align-middle"></i>
+                                    </a>
+                                </li>
+                            }
+                            <li class="nav-item me-3">
+                                <a class="nav-link text-white position-relative" href="javascript:void(0)" onclick="openCart()">
+                                    <i class="bi bi-cart3 fs-4"></i>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cartBadge">0</span>
                                 </a>
                             </li>
                         }
 
-                        <li class="nav-item me-3">
-                            <a class="nav-link text-white fw-bold" asp-controller="Carrito" asp-action="Index">
-                                <i class="bi bi-cart3 fs-5 align-middle me-1"></i>
-                                <span class="badge bg-danger rounded-pill">@totalItems</span>
-                            </a>
-                        </li>
-
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-light fw-bold px-3 py-2 border rounded-pill" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-person-circle fs-5 align-middle me-1"></i> @User.Identity.Name
+                                <a class="nav-link dropdown-toggle text-light fw-bold px-3 border rounded-pill" href="#" id="userDrop" data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle"></i> @User.Identity.Name
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="userDropdown">
-                                    <li><a class="dropdown-item fw-bold text-primary py-2" asp-controller="Pedidos" asp-action="Index"><i class="bi bi-box-seam me-2"></i>Mis Pedidos</a></li>
-                                    <li><a class="dropdown-item fw-bold text-danger py-2" asp-controller="Deseos" asp-action="Index"><i class="bi bi-heart-fill me-2"></i>Lista de Deseos</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <form asp-controller="Account" asp-action="Logout" method="post">
-                                            <button type="submit" class="dropdown-item text-danger fw-bold py-2"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</button>
-                                        </form>
-                                    </li>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                                    @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
+                                    {
+                                        <li><a class="dropdown-item py-2" asp-controller="Pedidos" asp-action="Index">Mis Pedidos</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+                                    <li><form asp-controller="Account" asp-action="Logout" method="post"><button type="submit" class="dropdown-item fw-bold text-danger">Cerrar Sesión</button></form></li>
                                 </ul>
                             </li>
                         }
                         else
                         {
-                            <li class="nav-item"><a class="nav-link btn btn-outline-light px-3 rounded-pill" asp-controller="Account" asp-action="Login">Entrar</a></li>
+                            <li class="nav-item me-2"><a class="nav-link btn btn-outline-light px-4 rounded-pill border-0" asp-controller="Account" asp-action="Login">Iniciar Sesión</a></li>
+                            <li class="nav-item"><a class="nav-link btn btn-primary px-4 rounded-pill text-white fw-bold shadow-sm" asp-controller="Account" asp-action="Register">Crear Cuenta</a></li>
                         }
                     </ul>
                 </div>
@@ -83,20 +99,90 @@
 
     <main role="main" class="pb-3 flex-grow-1">@RenderBody()</main>
 
-    <button class="btn btn-primary rounded-circle shadow-lg position-fixed d-flex justify-content-center align-items-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#chatbotOffcanvas" style="bottom: 30px; right: 30px; width: 65px; height: 65px; z-index: 1000;"><i class="bi bi-robot fs-2"></i></button>
+    @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
+    {
+        <button class="btn btn-primary rounded-circle shadow-lg position-fixed d-flex justify-content-center align-items-center" type="button" onclick="openChat()" style="bottom: 30px; right: 30px; width: 65px; height: 65px; z-index: 1000;"><i class="bi bi-robot fs-2"></i></button>
+
+        <div class="offcanvas offcanvas-start offcanvas-custom shadow" tabindex="-1" id="cartSidebar">
+            <div class="offcanvas-header bg-dark text-white">
+                <h5 class="offcanvas-title fw-bold"><i class="bi bi-cart3 me-2"></i>Carrito de Compras</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+            </div>
+            <div class="offcanvas-body d-flex flex-column" id="cartBody">
+            </div>
+        </div>
+
+        <div class="offcanvas offcanvas-end offcanvas-custom shadow" tabindex="-1" id="chatSidebar">
+            <div class="offcanvas-header bg-primary text-white">
+                <h5 class="offcanvas-title fw-bold"><i class="bi bi-robot me-2"></i>Asistente Librero</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+            </div>
+            <div class="offcanvas-body d-flex flex-column bg-light">
+                <div id="chatBox" class="flex-grow-1 overflow-auto p-3 mb-3 bg-white rounded border" style="max-height: 70vh;"></div>
+                <div class="input-group shadow-sm">
+                    <input type="text" id="chatInput" class="form-control border-0 px-3" placeholder="¿Qué libro buscas?">
+                    <button class="btn btn-primary" onclick="sendMsg()"><i class="bi bi-send"></i></button>
+                </div>
+            </div>
+        </div>
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-        $(document).ready(function() {
-            var exito = '@TempData["Exito"]';
-            var error = '@TempData["Error"]';
-            if (exito) { Swal.fire({ icon: 'success', title: '¡Éxito!', text: exito, timer: 2500, showConfirmButton: false }); }
-            if (error) { Swal.fire({ icon: 'error', title: 'Atención', text: error }); }
+        const cartOff = new bootstrap.Offcanvas('#cartSidebar');
+        const chatOff = new bootstrap.Offcanvas('#chatSidebar');
+
+        // Lógica de apertura exclusiva
+        function openCart() { chatOff.hide(); refreshCart(); cartOff.show(); }
+        function openChat() { cartOff.hide(); chatOff.show(); }
+
+        // Actualizar el carrito mediante AJAX
+        function refreshCart() {
+            $.get('/Carrito/GetCarritoPartial', function(data) {
+                $('#cartBody').html(data);
+                $('#cartBadge').text($('#cartItemCount').val() || 0);
+            });
+        }
+
+        // Agregar libros y lanzar notificación sin recargar
+        function addToCart(id, titulo, precio, url) {
+            $.post('/Carrito/AgregarAjax', { id, titulo, precio, portadaUrl: url }, function(res) {
+                if(res.success) {
+                    refreshCart();
+                    Swal.fire({
+                        icon: 'success', title: '¡Agregado!', text: titulo + ' está en tu carrito.',
+                        toast: true, position: 'top-end', timer: 2500, showConfirmButton: false
+                    });
+                }
+                else { Swal.fire('Error', res.message, 'error'); }
+            });
+        }
+
+        // Alerta de confirmación general
+        $(document).on('submit', '.form-eliminar', function(e) {
+            e.preventDefault();
+            Swal.fire({ title: '¿Seguro?', text: "Se borrará definitivamente.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Eliminar' })
+            .then((res) => { if(res.isConfirmed) this.submit(); });
         });
+
+        // Chatbot
+        async function sendMsg() {
+            const inp = document.getElementById('chatInput');
+            const box = document.getElementById('chatBox');
+            if(!inp.value.trim()) return;
+            box.innerHTML += `<div class="p-2 mb-2 bg-light text-end ms-auto w-75 rounded border shadow-sm">${inp.value}</div>`;
+            const txt = inp.value; inp.value = '';
+            const res = await fetch(`/Chatbot/Preguntar?mensaje=${encodeURIComponent(txt)}`);
+            const data = await res.json();
+            box.innerHTML += `<div class="p-2 mb-2 bg-primary text-white rounded w-75 shadow-sm">${data.respuesta}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        $(document).ready(refreshCart);
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

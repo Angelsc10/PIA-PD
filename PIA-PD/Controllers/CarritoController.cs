@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization; // <-- NUEVO: Librería de Seguridad
+using Microsoft.AspNetCore.Mvc;
 using PIA_PD.Models;
 using PIA_PD.Extensions;
 using PIA_PD.Data;
@@ -15,31 +16,49 @@ namespace PIA_PD.Controllers
             _context = context;
         }
 
+        // --- 1. LÓGICA AJAX PARA EL NUEVO CARRITO LATERAL ---
+        public IActionResult GetCarritoPartial()
+        {
+            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            return PartialView("_CarritoPartial", carrito);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AgregarAjax(string id, string titulo, decimal precio, string portadaUrl)
+        {
+            var libroDb = await _context.LibrosInternos.FindAsync(id);
+            if (libroDb != null && libroDb.Stock <= 0)
+                return Json(new { success = false, message = "Libro agotado en bodega." });
+
+            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var item = carrito.FirstOrDefault(i => i.LibroId == id);
+
+            if (item != null) item.Cantidad++;
+            else carrito.Add(new CarritoItem { LibroId = id, Titulo = titulo, Precio = precio, PortadaUrl = portadaUrl, Cantidad = 1 });
+
+            HttpContext.Session.Set("MiCarrito", carrito);
+            return Json(new { success = true, count = carrito.Sum(i => i.Cantidad) });
+        }
+
+        [HttpPost]
+        public IActionResult ActualizarCantidad(string id, int cambio)
+        {
+            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var item = carrito.FirstOrDefault(i => i.LibroId == id);
+            if (item != null)
+            {
+                item.Cantidad += cambio;
+                if (item.Cantidad <= 0) carrito.Remove(item);
+            }
+            HttpContext.Session.Set("MiCarrito", carrito);
+            return RedirectToAction("GetCarritoPartial");
+        }
+
+        // --- 2. EL CARRITO TRADICIONAL ---
         public IActionResult Index()
         {
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
             return View(carrito);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Agregar(string id, string titulo, decimal precio, string portadaUrl)
-        {
-            var libroDb = await _context.LibrosInternos.FindAsync(id);
-            if (libroDb != null && libroDb.Stock <= 0)
-            {
-                TempData["Error"] = "Lo sentimos, este libro se ha agotado en bodega.";
-                return RedirectToAction("Index", "Home");
-            }
-
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
-            var itemExistente = carrito.FirstOrDefault(i => i.LibroId == id);
-
-            if (itemExistente != null) itemExistente.Cantidad++;
-            else carrito.Add(new CarritoItem { LibroId = id, Titulo = titulo, Precio = precio, PortadaUrl = portadaUrl, Cantidad = 1 });
-
-            HttpContext.Session.Set("MiCarrito", carrito);
-            TempData["Exito"] = $"¡{titulo} agregado al carrito!";
-            return RedirectToAction("Index", "Home");
         }
 
         public IActionResult Eliminar(string id)
@@ -51,64 +70,61 @@ namespace PIA_PD.Controllers
             return RedirectToAction("Index");
         }
 
-        // --- NUEVA SECCIÓN: LÓGICA DE CUPONES ---
+        // --- 3. LÓGICA DE CUPONES DE DESCUENTO ---
         [HttpPost]
         public async Task<IActionResult> AplicarCupon(string codigo)
         {
             if (string.IsNullOrWhiteSpace(codigo)) return RedirectToAction("Index");
 
             var codigoUpper = codigo.ToUpper();
-
-            // Truco de desarrollo: Si no existe el cupón "PROFE100", lo creamos mágicamente
             if (codigoUpper == "PROFE100" && !await _context.Cupones.AnyAsync(c => c.Codigo == "PROFE100"))
             {
                 _context.Cupones.Add(new Cupon { Codigo = "PROFE100", PorcentajeDescuento = 15, Activo = true });
                 await _context.SaveChangesAsync();
             }
 
-            // Buscamos el cupón en MySQL
             var cupon = await _context.Cupones.FirstOrDefaultAsync(c => c.Codigo == codigoUpper && c.Activo);
-
             if (cupon != null)
             {
-                HttpContext.Session.Set("MiCupon", cupon); // Guardamos el objeto cupón en la memoria
-                TempData["Exito"] = $"¡Cupón aplicado! Tienes {cupon.PorcentajeDescuento}% de descuento.";
+                HttpContext.Session.Set("MiCupon", cupon);
+                TempData["Exito"] = $"¡Cupón aplicado! {cupon.PorcentajeDescuento}% de descuento.";
             }
             else
             {
-                TempData["Error"] = "El cupón no existe o ha expirado.";
+                TempData["Error"] = "Cupón inválido.";
             }
-
             return RedirectToAction("Index");
         }
 
         public IActionResult RemoverCupon()
         {
             HttpContext.Session.Remove("MiCupon");
-            TempData["Exito"] = "Cupón removido del carrito.";
             return RedirectToAction("Index");
         }
 
+        // --- 4. NUEVO CHECKOUT DE 3 PASOS BLINDADO ---
+
         [HttpGet]
-        public IActionResult Confirmar()
+        [Authorize] // <-- BLINDAJE: Solo usuarios logueados pueden entrar aquí
+        public IActionResult Checkout()
         {
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito");
-            if (carrito == null || !carrito.Any()) return RedirectToAction("Index");
-            return View(carrito);
+            if (carrito == null || !carrito.Any()) return RedirectToAction("Index", "Home");
+            return View();
         }
 
         [HttpPost]
-        public async Task<IActionResult> ProcesarPago(string? email)
+        [Authorize] // <-- BLINDAJE: Solo usuarios logueados pueden procesar el pago
+        public async Task<IActionResult> FinalizarCompra(string Email, string Telefono, string Calle, string CP, string Ciudad, string Estado, string Metodo)
         {
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito");
-            if (carrito == null || !carrito.Any()) return RedirectToAction("Index");
+            if (carrito == null || !carrito.Any()) return RedirectToAction("Index", "Home");
 
             decimal subtotal = carrito.Sum(i => i.Precio * i.Cantidad);
             decimal totalVenta = subtotal;
             decimal montoDescuento = 0;
             string? cuponCodigo = null;
 
-            // Revisamos si hay un cupón activo para hacer la matemática
             var cuponAplicado = HttpContext.Session.Get<Cupon>("MiCupon");
             if (cuponAplicado != null)
             {
@@ -119,12 +135,12 @@ namespace PIA_PD.Controllers
 
             var nuevaVenta = new Venta
             {
-                Usuario = User.Identity?.IsAuthenticated == true ? User.Identity.Name : "Cliente Anónimo",
-                Email = email,
+                Usuario = User.Identity.Name, // Ya sabemos que está logueado gracias al [Authorize]
+                Email = Email,
                 Fecha = DateTime.Now,
                 Total = totalVenta,
-                Descuento = montoDescuento,     // Registramos en BD
-                CuponAplicado = cuponCodigo     // Registramos en BD
+                Descuento = montoDescuento,
+                CuponAplicado = cuponCodigo
             };
 
             foreach (var item in carrito)
@@ -141,9 +157,12 @@ namespace PIA_PD.Controllers
             _context.Ventas.Add(nuevaVenta);
             await _context.SaveChangesAsync();
 
-            // Limpiamos todo al final
+            // Limpiamos todo
             HttpContext.Session.Remove("MiCarrito");
             HttpContext.Session.Remove("MiCupon");
+
+            // Mensaje de confirmación simulado
+            TempData["Exito"] = $"¡Compra Exitosa! Se ha enviado la confirmación al correo {Email} y un SMS al {Telefono}. Pagaste mediante: {Metodo}";
 
             return RedirectToAction("VerTicketWeb", "Pedidos", new { id = nuevaVenta.Id });
         }

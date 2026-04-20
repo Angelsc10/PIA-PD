@@ -19,10 +19,15 @@ namespace PIA_PD.Controllers
             _apiService = apiService;
         }
 
-        // CAMBIO: Ahora acepta Búsqueda de texto (q) o Filtro de Categoría
-        public async Task<IActionResult> Index(string? q, string? categoria)
+        // AGREGADO: Parámetro "pagina"
+        public async Task<IActionResult> Index(string? q, string? categoria, int pagina = 1)
         {
-            // Mandamos los datos al menú lateral de HTML
+            // BLOQUEO AL ADMIN: Si un admin intenta entrar a la tienda, lo regresamos a trabajar
+            if (User.IsInRole("Admin") || User.IsInRole("Empleado"))
+            {
+                return RedirectToAction("Index", "Admin");
+            }
+
             ViewBag.Categorias = new List<string> { "Ficción", "Romance", "Misterio", "Fantasía", "Ciencia Ficción", "Tecnología" };
             ViewBag.CategoriaActual = categoria;
             ViewBag.Busqueda = q;
@@ -30,28 +35,34 @@ namespace PIA_PD.Controllers
             List<Libro> librosLocales;
             List<Libro> librosApi;
 
-            // Prioridad 1: Si usaron la barra de búsqueda
             if (!string.IsNullOrWhiteSpace(q))
             {
-                librosLocales = await _context.LibrosInternos
-                    .Where(l => l.Titulo.Contains(q) || l.Autor.Contains(q)).ToListAsync();
+                librosLocales = await _context.LibrosInternos.Where(l => l.Titulo.Contains(q) || l.Autor.Contains(q)).ToListAsync();
                 librosApi = await _apiService.BuscarLibrosAsync(q);
             }
-            // Prioridad 2: Si le dieron clic a una categoría del menú lateral
             else if (!string.IsNullOrWhiteSpace(categoria))
             {
-                librosLocales = await _context.LibrosInternos
-                    .Where(l => l.Categoria == categoria).ToListAsync();
+                librosLocales = await _context.LibrosInternos.Where(l => l.Categoria == categoria).ToListAsync();
                 librosApi = await _apiService.ObtenerLibrosPorCategoriaAsync(categoria);
             }
-            // Prioridad 3: Pantalla principal por defecto
             else
             {
                 librosLocales = await _context.LibrosInternos.ToListAsync();
                 librosApi = await _apiService.ObtenerLibrosDestacadosAsync();
             }
 
-            return View(librosLocales.Concat(librosApi).ToList());
+            // UNIMOS AMBAS LISTAS Y FILTRAMOS LOS QUE TIENEN STOCK > 0
+            var todosLosLibros = librosLocales.Concat(librosApi).Where(l => l.Stock > 0).ToList();
+
+            // MATEMÁTICA DE LA PAGINACIÓN
+            int tamanoPagina = 12;
+            int totalLibros = todosLosLibros.Count;
+            var librosPaginados = todosLosLibros.Skip((pagina - 1) * tamanoPagina).Take(tamanoPagina).ToList();
+
+            ViewBag.PaginaActual = pagina;
+            ViewBag.TotalPaginas = (int)Math.Ceiling(totalLibros / (double)tamanoPagina);
+
+            return View(librosPaginados);
         }
 
         public async Task<IActionResult> Detalles(string id)
