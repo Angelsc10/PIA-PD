@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PIA_PD.Data;
 
@@ -11,9 +12,11 @@ using PIA_PD.Data;
 namespace PIA_PD.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260419071622_AgregarCategoriasLibro")]
+    partial class AgregarCategoriasLibro
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -218,63 +221,6 @@ namespace PIA_PD.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("PIA_PD.Models.Cupon", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Codigo")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("PorcentajeDescuento")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Cupones");
-                });
-
-            modelBuilder.Entity("PIA_PD.Models.Deseo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("FechaAgregado")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("LibroId")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("PortadaUrl")
-                        .HasColumnType("longtext");
-
-                    b.Property<decimal>("Precio")
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Usuario")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Deseos");
-                });
-
             modelBuilder.Entity("PIA_PD.Models.DetalleVenta", b =>
                 {
                     b.Property<int>("Id")
@@ -376,12 +322,6 @@ namespace PIA_PD.Migrations
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CuponAplicado")
-                        .HasColumnType("longtext");
-
-                    b.Property<decimal>("Descuento")
-                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Email")
                         .HasColumnType("longtext");

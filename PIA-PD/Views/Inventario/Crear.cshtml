@@ -22,6 +22,18 @@
                         <label asp-for="Autor">Autor(es) *</label>
                     </div>
 
+                    <div class="form-floating mb-3">
+                        <select asp-for="Categoria" class="form-select" required>
+                            <option value="Ficción">Ficción</option>
+                            <option value="Romance">Romance</option>
+                            <option value="Misterio">Misterio</option>
+                            <option value="Fantasía">Fantasía</option>
+                            <option value="Ciencia Ficción">Ciencia Ficción</option>
+                            <option value="Tecnología">Tecnología</option>
+                        </select>
+                        <label asp-for="Categoria">Categoría Literaria *</label>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-floating mb-3">

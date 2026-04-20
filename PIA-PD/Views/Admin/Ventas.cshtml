@@ -6,7 +6,14 @@
 <div class="container mt-5 mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
         <h2 class="fw-bold"><i class="bi bi-receipt me-2"></i>Historial de Ventas</h2>
-        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill shadow-sm"><i class="bi bi-arrow-left me-1"></i> Volver al Panel</a>
+        <div>
+            <a asp-action="ExportarExcel" class="btn btn-success rounded-pill shadow-sm me-2">
+                <i class="bi bi-file-earmark-excel-fill me-1"></i> Exportar a Excel
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill shadow-sm">
+                <i class="bi bi-arrow-left me-1"></i> Volver al Panel
+            </a>
+        </div>
     </div>
 
     @if (Model == null || !Model.Any())
@@ -40,7 +47,7 @@
                                 <td>@venta.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td><span class="badge bg-secondary rounded-pill px-3 py-2">@venta.Usuario</span></td>
                                 <td>@venta.Detalles.Sum(d => d.Cantidad) libros</td>
-                                <td class="text-success fw-bold fs-5">$@venta.Total.ToString("0.0000")</td>
+                                <td class="text-success fw-bold fs-5">$@venta.Total.ToString("0.00")</td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-dark rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#detalles-@venta.Id" aria-expanded="false">
                                         <i class="bi bi-eye"></i> Ver Libros
@@ -66,8 +73,8 @@
                                                     <tr>
                                                         <td>@detalle.Titulo</td>
                                                         <td class="text-center">@detalle.Cantidad</td>
-                                                        <td class="text-end">$@detalle.PrecioUnitario.ToString("0.0000")</td>
-                                                        <td class="text-end fw-bold">$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("0.0000"))</td>
+                                                        <td class="text-end">$@detalle.PrecioUnitario.ToString("0.00")</td>
+                                                        <td class="text-end fw-bold">$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("0.00"))</td>
                                                     </tr>
                                                 }
                                             </tbody>

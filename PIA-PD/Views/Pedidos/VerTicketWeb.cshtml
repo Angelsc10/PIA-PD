@@ -1,0 +1,220 @@
+﻿@model PIA_PD.Models.Venta
+@{
+    ViewData["Title"] = "Ticket de Compra";
+    // Desactivamos el layout general para que esta pantalla sea solo el ticket puro
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ticket #@Model.Id - El Rincón del Libro</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .ticket-contenedor {
+            background-color: #fff;
+            width: 100%;
+            max-width: 380px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top: 10px solid #212529; /* Borde oscuro simulando inicio del papel */
+        }
+
+        .ticket-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+            .ticket-header h2 {
+                margin: 0;
+                font-size: 22px;
+                font-weight: bold;
+            }
+
+            .ticket-header p {
+                margin: 5px 0;
+                font-size: 14px;
+                color: #555;
+            }
+
+        .linea-separadora {
+            border-top: 2px dashed #000;
+            margin: 15px 0;
+        }
+
+        .tabla-productos {
+            width: 100%;
+            font-size: 14px;
+            text-align: left;
+            border-collapse: collapse;
+        }
+
+            .tabla-productos th, .tabla-productos td {
+                padding: 5px 0;
+            }
+
+            .tabla-productos .precio {
+                text-align: right;
+            }
+
+        .ticket-totales {
+            margin-top: 15px;
+            text-align: right;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .ticket-barcode {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* Botones flotantes que no se imprimirán en el PDF final */
+        .botones-accion {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: 0.2s;
+        }
+
+        .btn-imprimir {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+            .btn-imprimir:hover {
+                background-color: #0b5ed7;
+                transform: translateY(-2px);
+            }
+
+        .btn-volver {
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+            .btn-volver:hover {
+                background-color: #5c636a;
+            }
+
+        /* Magia CSS: Ocultamos los botones al momento de imprimir */
+        @("@") media print {
+            body
+
+        {
+            background-color: white;
+        }
+
+        .ticket-contenedor {
+            box-shadow: none;
+            border-top: none;
+        }
+
+        .botones-accion {
+            display: none !important;
+        }
+
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ticket-contenedor">
+        <div class="ticket-header">
+            <i class="bi bi-book-half" style="font-size: 40px; color: #212529;"></i>
+            <h2>EL RINCÓN DEL LIBRO</h2>
+            <p>Av. Universidad S/N, San Nicolás</p>
+            <p>Nuevo León, México. CP 66455</p>
+        </div>
+
+        <div class="linea-separadora"></div>
+        <p><strong>FECHA:</strong> @Model.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
+        <p><strong>FOLIO:</strong> #@Model.Id.ToString("000000")</p>
+        <p><strong>CLIENTE:</strong> @Model.Usuario</p>
+        <div class="linea-separadora"></div>
+
+        <table class="tabla-productos">
+            <thead>
+                <tr>
+                    <th>CANT</th>
+                    <th>ARTÍCULO</th>
+                    <th class="precio">IMPORTE</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Detalles)
+                {
+                    <tr>
+                        <td>@item.Cantidad</td>
+                        <td>@item.Titulo</td>
+                        <td class="precio">$@((item.PrecioUnitario * item.Cantidad).ToString("0.00"))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="linea-separadora"></div>
+
+        <div class="ticket-totales">
+            TOTAL: $@Model.Total.ToString("0.00") MXN
+        </div>
+
+        <div class="linea-separadora"></div>
+
+        <div class="ticket-header" style="margin-top: 15px;">
+            <p>¡Gracias por incentivar la lectura!</p>
+            <p>Conserve este ticket para devoluciones.</p>
+        </div>
+
+        <div class="ticket-barcode">
+            <svg id="barcode"></svg>
+        </div>
+    </div>
+
+    <div class="botones-accion">
+        <a href="/" class="btn btn-volver"><i class="bi bi-arrow-left" style="margin-right:8px;"></i> Tienda</a>
+        <button onclick="window.print()" class="btn btn-imprimir"><i class="bi bi-printer-fill" style="margin-right:8px;"></i> Imprimir / PDF</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script>
+        // Genera un código de barras basado en el Folio de Venta de MySQL
+        JsBarcode("#barcode", "@Model.Id.ToString("0000000000")", {
+            format: "CODE128",
+            width: 2,
+            height: 50,
+            displayValue: true,
+            fontSize: 14,
+            background: "transparent"
+        });
+    </script>
+</body>
+</html>

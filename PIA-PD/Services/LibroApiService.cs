@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Net.Http;
+using System.Text.Json;
 using PIA_PD.Models;
 
 namespace PIA_PD.Services
@@ -10,77 +11,121 @@ namespace PIA_PD.Services
         public LibroApiService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            // Un User-Agent amigable para identificarnos como proyecto universitario
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "ProyectoUniversidad_PIA/1.0 (contacto@test.com)");
         }
 
         public async Task<List<Libro>> ObtenerLibrosDestacadosAsync()
         {
+            return await ExtraerLibrosDeSujeto("fiction");
+        }
+
+        // NUEVO: Buscador por Categorías Exactas
+        public async Task<List<Libro>> ObtenerLibrosPorCategoriaAsync(string categoria)
+        {
+            if (string.IsNullOrWhiteSpace(categoria)) return new List<Libro>();
+
+            // Traducimos el español del menú a los temas oficiales de la API
+            string subject = categoria.ToLower() switch
+            {
+                "romance" => "romance",
+                "misterio" => "mystery_and_detective_stories",
+                "fantasía" => "fantasy",
+                "ciencia ficción" => "science_fiction",
+                "tecnología" => "programming",
+                _ => "fiction"
+            };
+
+            return await ExtraerLibrosDeSujeto(subject);
+        }
+
+        // Función auxiliar para no repetir código al leer la API por temas
+        private async Task<List<Libro>> ExtraerLibrosDeSujeto(string subject)
+        {
             var libros = new List<Libro>();
             try
             {
-                // Usamos OpenLibrary, buscando libros de ciencia ficción (no requiere llaves)
-                var response = await _httpClient.GetAsync("https://openlibrary.org/subjects/science_fiction.json?limit=12");
-
+                var response = await _httpClient.GetAsync($"https://openlibrary.org/subjects/{subject}.json?limit=12");
                 if (response.IsSuccessStatusCode)
                 {
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    using var document = JsonDocument.Parse(jsonString);
+                    var content = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(content);
+                    var works = doc.RootElement.GetProperty("works");
 
-                    if (document.RootElement.TryGetProperty("works", out var works))
+                    foreach (var work in works.EnumerateArray())
                     {
-                        foreach (var item in works.EnumerateArray())
+                        libros.Add(new Libro
                         {
-                            var titulo = item.TryGetProperty("title", out var titleProp) ? titleProp.GetString() : "Sin Título";
-
-                            var autor = "Autor Desconocido";
-                            if (item.TryGetProperty("authors", out var authorsProp) && authorsProp.GetArrayLength() > 0)
-                            {
-                                autor = authorsProp[0].TryGetProperty("name", out var nameProp) ? nameProp.GetString() : "Autor Desconocido";
-                            }
-
-                            // OpenLibrary maneja las portadas por un ID numérico
-                            var portadaUrl = "https://via.placeholder.com/300x400?text=Sin+Portada";
-                            if (item.TryGetProperty("cover_id", out var coverIdProp) && coverIdProp.ValueKind != JsonValueKind.Null)
-                            {
-                                portadaUrl = $"https://covers.openlibrary.org/b/id/{coverIdProp.GetInt32()}-L.jpg";
-                            }
-
-                            // Simulamos el precio como lo hacíamos antes
-                            var random = new Random();
-                            var precio = (decimal)(random.Next(150, 500) + 0.99);
-
-                            libros.Add(new Libro
-                            {
-                                Id = item.TryGetProperty("key", out var keyProp) ? keyProp.GetString() ?? Guid.NewGuid().ToString() : Guid.NewGuid().ToString(),
-                                Titulo = titulo ?? "Sin Título",
-                                Autor = autor ?? "Autor Desconocido",
-                                PortadaUrl = portadaUrl,
-                                Precio = precio
-                            });
-                        }
+                            Id = "OL-" + work.GetProperty("key").GetString()?.Split('/').Last(),
+                            Titulo = work.GetProperty("title").GetString() ?? "Sin título",
+                            Autor = work.TryGetProperty("authors", out var authors) && authors.GetArrayLength() > 0
+                                    ? authors[0].GetProperty("name").GetString() ?? "Anónimo" : "Anónimo",
+                            PortadaUrl = work.TryGetProperty("cover_id", out var id)
+                                ? $"https://covers.openlibrary.org/b/id/{id}-M.jpg" : "https://via.placeholder.com/300x400?text=Sin+Portada",
+                            Precio = 250.00m
+                        });
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error interno al consultar la API: {ex.Message}");
-            }
-
-            // Sistema de respaldo por si se va el internet
-            if (libros.Count == 0)
-            {
-                libros.Add(new Libro
-                {
-                    Id = "error-101",
-                    Titulo = "Error de Conexión a la API",
-                    Autor = "Soporte Técnico",
-                    Precio = 0,
-                    PortadaUrl = "https://via.placeholder.com/300x400?text=Error+API"
-                });
-            }
-
+            catch { }
             return libros;
+        }
+
+        public async Task<List<Libro>> BuscarLibrosAsync(string query)
+        {
+            var libros = new List<Libro>();
+            if (string.IsNullOrWhiteSpace(query)) return libros;
+            try
+            {
+                var response = await _httpClient.GetAsync($"https://openlibrary.org/search.json?q={Uri.EscapeDataString(query)}&limit=12");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(content);
+                    var docs = doc.RootElement.GetProperty("docs");
+
+                    foreach (var d in docs.EnumerateArray())
+                    {
+                        libros.Add(new Libro
+                        {
+                            Id = "OL-" + d.GetProperty("key").GetString()?.Split('/').Last(),
+                            Titulo = d.GetProperty("title").GetString() ?? "Sin título",
+                            Autor = d.TryGetProperty("author_name", out var authors) ? authors[0].GetString() ?? "Anónimo" : "Anónimo",
+                            PortadaUrl = d.TryGetProperty("cover_i", out var coverId)
+                                ? $"https://covers.openlibrary.org/b/id/{coverId}-M.jpg" : "https://via.placeholder.com/300x400?text=Sin+Portada",
+                            Precio = 299.90m
+                        });
+                    }
+                }
+            }
+            catch { }
+            return libros;
+        }
+
+        public async Task<Libro?> ObtenerLibroPorIdAsync(string id)
+        {
+            try
+            {
+                string key = id.Replace("OL-", "");
+                var response = await _httpClient.GetAsync($"https://openlibrary.org/works/{key}.json");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(content);
+                    var root = doc.RootElement;
+
+                    return new Libro
+                    {
+                        Id = id,
+                        Titulo = root.TryGetProperty("title", out var t) ? t.GetString() ?? "Sin título" : "Sin título",
+                        Autor = "Autor de OpenLibrary",
+                        PortadaUrl = root.TryGetProperty("covers", out var covers) && covers.GetArrayLength() > 0
+                            ? $"https://covers.openlibrary.org/b/id/{covers[0].GetInt32()}-L.jpg" : "https://via.placeholder.com/300x400?text=Sin+Portada",
+                        Precio = 250.00m,
+                        Stock = 100
+                    };
+                }
+            }
+            catch { }
+            return null;
         }
     }
 }

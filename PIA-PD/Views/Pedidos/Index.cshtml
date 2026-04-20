@@ -1,0 +1,69 @@
+﻿@model IEnumerable<PIA_PD.Models.Venta>
+@{
+    ViewData["Title"] = "Mis Pedidos";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h2 class="fw-bold text-primary"><i class="bi bi-box-seam me-2"></i>Mis Pedidos</h2>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill shadow-sm"><i class="bi bi-arrow-left me-1"></i> Volver a la Tienda</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 bg-light rounded shadow-sm border">
+            <i class="bi bi-bag-x display-1 text-muted mb-3"></i>
+            <h3 class="fw-bold text-dark">Aún no has comprado libros</h3>
+            <p class="text-muted">Cuando realices tu primer pedido, aparecerá aquí.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary rounded-pill px-4 mt-2">Ir a comprar</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                @foreach (var venta in Model)
+                {
+                    <div class="card shadow-sm border-0 mb-4 overflow-hidden">
+                        <div class="card-header bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="d-block small text-light opacity-75">PEDIDO REALIZADO</span>
+                                <span class="fw-bold">@venta.Fecha.ToString("dd 'de' MMMM, yyyy")</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="d-block small text-light opacity-75">TOTAL</span>
+                                <span class="fw-bold">$@venta.Total.ToString("0.00") MXN</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="d-block small text-light opacity-75">FOLIO</span>
+                                <span class="fw-bold">#@venta.Id</span>
+                            </div>
+                        </div>
+
+                        <div class="card-body bg-white p-4">
+                            <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-journals me-2"></i>Artículos incluidos:</h6>
+                            <ul class="list-group list-group-flush mb-4">
+                                @foreach (var libro in venta.Detalles)
+                                {
+                                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center border-bottom-0 pb-1">
+                                        <div>
+                                            <span class="badge bg-secondary rounded-pill me-2">@libro.Cantidad x</span>
+                                            <span class="fw-bold text-dark">@libro.Titulo</span>
+                                        </div>
+                                        <span class="text-muted small">$@((libro.PrecioUnitario * libro.Cantidad).ToString("0.00"))</span>
+                                    </li>
+                                }
+                            </ul>
+
+                            <div class="d-flex justify-content-end border-top pt-3">
+                                <a asp-action="VerTicketWeb" asp-route-id="@venta.Id" class="btn btn-outline-primary rounded-pill shadow-sm">
+                                    <i class="bi bi-receipt me-1"></i> Ver e Imprimir Ticket
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PIA_PD.Data;
+using ClosedXML.Excel;
 
 namespace PIA_PD.Controllers
 {
@@ -18,8 +19,31 @@ namespace PIA_PD.Controllers
             _userManager = userManager;
         }
 
-        public IActionResult Index()
+        // --- CAMBIO: El Index ahora calcula la Inteligencia de Negocios ---
+        public async Task<IActionResult> Index()
         {
+            // 1. Buscamos los libros físicos que están a punto de agotarse (menos de 5 unidades)
+            var alertasStock = await _context.LibrosInternos
+                .Where(l => l.Stock < 5)
+                .OrderBy(l => l.Stock)
+                .ToListAsync();
+
+            // 2. Calculamos los 3 libros más vendidos sumando todo el historial de detalles
+            var topVentas = await _context.DetallesVenta
+                .GroupBy(d => d.Titulo)
+                .Select(g => new TopVentaDto
+                {
+                    Titulo = g.Key,
+                    CantidadVendida = g.Sum(d => d.Cantidad)
+                })
+                .OrderByDescending(x => x.CantidadVendida)
+                .Take(3)
+                .ToListAsync();
+
+            // Mandamos los resultados a la Vista
+            ViewBag.AlertasStock = alertasStock;
+            ViewBag.TopVentas = topVentas;
+
             return View();
         }
 
@@ -33,44 +57,25 @@ namespace PIA_PD.Controllers
             return View(ventas);
         }
 
-        // --- NUEVA SECCIÓN: API DE ESTADÍSTICAS PARA LA GRÁFICA ---
         [HttpGet]
         public async Task<IActionResult> GetDatosVentas()
         {
-            // Calculamos la fecha de hace 7 días
             var fechaInicio = DateTime.Now.Date.AddDays(-6);
+            var ventas = await _context.Ventas.Where(v => v.Fecha >= fechaInicio).ToListAsync();
 
-            // Traemos las ventas de esa semana
-            var ventas = await _context.Ventas
-                .Where(v => v.Fecha >= fechaInicio)
-                .ToListAsync();
+            var agrupado = ventas.GroupBy(v => v.Fecha.Date)
+                .Select(g => new { fecha = g.Key.ToString("dd/MM"), total = g.Sum(v => v.Total) }).ToList();
 
-            // Las agrupamos por día sumando el total de dinero
-            var agrupado = ventas
-                .GroupBy(v => v.Fecha.Date)
-                .Select(g => new {
-                    fecha = g.Key.ToString("dd/MM"),
-                    total = g.Sum(v => v.Total)
-                }).ToList();
-
-            // Rellenamos los días que no tuvieron ventas con $0 para que la gráfica no se rompa
             var datosGrafica = new List<object>();
             for (int i = 6; i >= 0; i--)
             {
                 var diaTexto = DateTime.Now.Date.AddDays(-i).ToString("dd/MM");
                 var ventaDia = agrupado.FirstOrDefault(v => v.fecha == diaTexto);
-
-                datosGrafica.Add(new
-                {
-                    fecha = diaTexto,
-                    total = ventaDia != null ? ventaDia.total : 0
-                });
+                datosGrafica.Add(new { fecha = diaTexto, total = ventaDia != null ? ventaDia.total : 0 });
             }
-
             return Json(datosGrafica);
         }
 
-        // --- SECCIÓN: GESTIÓN DE EMPLEADOS ---
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Empleados()
         {
@@ -86,15 +91,8 @@ namespace PIA_PD.Controllers
             {
                 var nuevoEmpleado = new IdentityUser { UserName = username, Email = "" };
                 var result = await _userManager.CreateAsync(nuevoEmpleado, password);
-
-                if (result.Succeeded)
-                {
-                    await _userManager.AddToRoleAsync(nuevoEmpleado, "Empleado");
-                }
-                else
-                {
-                    TempData["Error"] = "La contraseña debe tener 8 caracteres, mayúscula, número y símbolo.";
-                }
+                if (result.Succeeded) await _userManager.AddToRoleAsync(nuevoEmpleado, "Empleado");
+                else TempData["Error"] = "La contraseña debe tener 8 caracteres, mayúscula, número y símbolo.";
             }
             return RedirectToAction("Empleados");
         }
@@ -104,11 +102,61 @@ namespace PIA_PD.Controllers
         public async Task<IActionResult> BajaEmpleado(string id)
         {
             var empleado = await _userManager.FindByIdAsync(id);
-            if (empleado != null)
-            {
-                await _userManager.DeleteAsync(empleado);
-            }
+            if (empleado != null) await _userManager.DeleteAsync(empleado);
             return RedirectToAction("Empleados");
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportarExcel()
+        {
+            var ventas = await _context.Ventas
+                                .Include(v => v.Detalles)
+                                .OrderByDescending(v => v.Fecha)
+                                .ToListAsync();
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Reporte de Ventas");
+                var currentRow = 1;
+
+                worksheet.Cell(currentRow, 1).Value = "Folio de Venta";
+                worksheet.Cell(currentRow, 2).Value = "Fecha y Hora";
+                worksheet.Cell(currentRow, 3).Value = "Cliente";
+                worksheet.Cell(currentRow, 4).Value = "Total de Artículos";
+                worksheet.Cell(currentRow, 5).Value = "Total Pagado (MXN)";
+
+                var rangoCabecera = worksheet.Range(currentRow, 1, currentRow, 5);
+                rangoCabecera.Style.Fill.BackgroundColor = XLColor.DarkBlue;
+                rangoCabecera.Style.Font.FontColor = XLColor.White;
+                rangoCabecera.Style.Font.Bold = true;
+
+                foreach (var venta in ventas)
+                {
+                    currentRow++;
+                    worksheet.Cell(currentRow, 1).Value = $"#{venta.Id}";
+                    worksheet.Cell(currentRow, 2).Value = venta.Fecha.ToString("dd/MM/yyyy HH:mm");
+                    worksheet.Cell(currentRow, 3).Value = venta.Usuario;
+                    worksheet.Cell(currentRow, 4).Value = venta.Detalles.Sum(d => d.Cantidad);
+                    worksheet.Cell(currentRow, 5).Value = venta.Total;
+                    worksheet.Cell(currentRow, 5).Style.NumberFormat.Format = "$ #,##0.00";
+                }
+
+                worksheet.Columns().AdjustToContents();
+
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    var content = stream.ToArray();
+                    return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Reporte_Ventas_{DateTime.Now:ddMMyyyy}.xlsx");
+                }
+            }
+        }
+    }
+
+    // Clase auxiliar (Data Transfer Object) para empaquetar el Top de Ventas
+    public class TopVentaDto
+    {
+        public string Titulo { get; set; } = "";
+        public int CantidadVendida { get; set; }
     }
 }

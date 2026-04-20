@@ -17,7 +17,9 @@ namespace PIA_PD.Models
         [Column(TypeName = "decimal(18,4)")]
         public decimal Precio { get; set; }
 
-        // NUEVO: Cantidad de libros disponibles en bodega
         public int Stock { get; set; } = 0;
+
+        // NUEVO: Género literario del libro
+        public string Categoria { get; set; } = "Ficción";
     }
 }

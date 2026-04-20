@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PIA_PD.Data;
 using PIA_PD.Models;
 using PIA_PD.Services;
+using System.Diagnostics;
 
 namespace PIA_PD.Controllers
 {
@@ -11,45 +13,94 @@ namespace PIA_PD.Controllers
         private readonly ApplicationDbContext _context;
         private readonly LibroApiService _apiService;
 
-        // Inyectamos la base de datos y la API de libros
         public HomeController(ApplicationDbContext context, LibroApiService apiService)
         {
             _context = context;
             _apiService = apiService;
         }
 
-        public async Task<IActionResult> Index()
+        // CAMBIO: Ahora acepta Búsqueda de texto (q) o Filtro de Categoría
+        public async Task<IActionResult> Index(string? q, string? categoria)
         {
-            try
+            // Mandamos los datos al menú lateral de HTML
+            ViewBag.Categorias = new List<string> { "Ficción", "Romance", "Misterio", "Fantasía", "Ciencia Ficción", "Tecnología" };
+            ViewBag.CategoriaActual = categoria;
+            ViewBag.Busqueda = q;
+
+            List<Libro> librosLocales;
+            List<Libro> librosApi;
+
+            // Prioridad 1: Si usaron la barra de búsqueda
+            if (!string.IsNullOrWhiteSpace(q))
             {
-                // 1. Traemos los libros físicos que el Admin agregó a MySQL
-                var librosLocales = await _context.LibrosInternos.ToListAsync();
-
-                // 2. Traemos los libros mágicos de la API de OpenLibrary
-                var librosApi = await _apiService.ObtenerLibrosDestacadosAsync();
-
-                // 3. ¡Juntamos ambos mundos en una sola lista!
-                var catalogoCompleto = librosLocales.Concat(librosApi).ToList();
-
-                return View(catalogoCompleto);
+                librosLocales = await _context.LibrosInternos
+                    .Where(l => l.Titulo.Contains(q) || l.Autor.Contains(q)).ToListAsync();
+                librosApi = await _apiService.BuscarLibrosAsync(q);
             }
-            catch (Exception ex)
+            // Prioridad 2: Si le dieron clic a una categoría del menú lateral
+            else if (!string.IsNullOrWhiteSpace(categoria))
             {
-                Console.WriteLine($"Error al cargar el catálogo: {ex.Message}");
-                // Si no hay internet o falla la BD, mandamos una lista vacía para no crashear
-                return View(new List<Libro>());
+                librosLocales = await _context.LibrosInternos
+                    .Where(l => l.Categoria == categoria).ToListAsync();
+                librosApi = await _apiService.ObtenerLibrosPorCategoriaAsync(categoria);
             }
+            // Prioridad 3: Pantalla principal por defecto
+            else
+            {
+                librosLocales = await _context.LibrosInternos.ToListAsync();
+                librosApi = await _apiService.ObtenerLibrosDestacadosAsync();
+            }
+
+            return View(librosLocales.Concat(librosApi).ToList());
         }
 
-        public IActionResult Privacy()
+        public async Task<IActionResult> Detalles(string id)
         {
-            return View();
+            if (string.IsNullOrEmpty(id)) return RedirectToAction("Index");
+
+            Libro libro = null;
+            if (id.StartsWith("OL-"))
+            {
+                libro = await _apiService.ObtenerLibroPorIdAsync(id);
+            }
+            else
+            {
+                libro = await _context.LibrosInternos.FirstOrDefaultAsync(l => l.Id == id);
+            }
+
+            if (libro == null) return NotFound();
+
+            var resenas = await _context.Resenas
+                .Where(r => r.LibroId == id)
+                .OrderByDescending(r => r.Fecha)
+                .ToListAsync();
+
+            ViewBag.Resenas = resenas;
+            ViewBag.Promedio = resenas.Any() ? Math.Round(resenas.Average(r => r.Calificacion), 1) : 0.0;
+
+            return View(libro);
         }
 
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> AgregarResena(string libroId, int calificacion, string comentario)
+        {
+            if (calificacion < 1 || calificacion > 5 || string.IsNullOrWhiteSpace(comentario))
+            {
+                TempData["Error"] = "Debes escribir un comentario y seleccionar las estrellas.";
+                return RedirectToAction("Detalles", new { id = libroId });
+            }
+
+            var resena = new Resena { LibroId = libroId, Usuario = User.Identity.Name, Calificacion = calificacion, Comentario = comentario, Fecha = DateTime.Now };
+            _context.Resenas.Add(resena);
+            await _context.SaveChangesAsync();
+
+            TempData["Exito"] = "¡Gracias por tu reseña!";
+            return RedirectToAction("Detalles", new { id = libroId });
+        }
+
+        public IActionResult Privacy() => View();
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = System.Diagnostics.Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        public IActionResult Error() => View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

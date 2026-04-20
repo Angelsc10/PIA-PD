@@ -15,15 +15,20 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3">
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3 shadow">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">El Rincón del Libro</a>
+                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-book-half me-2"></i>El Rincón del Libro
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a></li>
                         @if (User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.IsInRole("Empleado")))
                         {
-                            <li class="nav-item"><a class="nav-link text-warning fw-bold" asp-controller="Admin" asp-action="Index">Panel Staff</a></li>
+                            <li class="nav-item"><a class="nav-link text-warning fw-bold ms-2" asp-controller="Admin" asp-action="Index"><i class="bi bi-shield-lock-fill me-1"></i>Panel Staff</a></li>
                         }
                     </ul>
                     <ul class="navbar-nav align-items-center">
@@ -31,11 +36,40 @@
                             var carritoActual = HttpContextAccessor.HttpContext?.Session?.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
                             int totalItems = carritoActual.Sum(i => i.Cantidad);
                         }
-                        <li class="nav-item"><a class="nav-link text-white fw-bold me-3" asp-controller="Carrito" asp-action="Index"><i class="bi bi-cart3"></i> (@totalItems)</a></li>
+
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item"><span class="nav-link text-light me-2">@User.Identity.Name</span></li>
-                            <li class="nav-item"><form asp-controller="Account" asp-action="Logout" method="post"><button type="submit" class="btn btn-link text-danger fw-bold shadow-none border-0">Salir</button></form></li>
+                            <li class="nav-item me-2">
+                                <a class="nav-link text-danger fw-bold" asp-controller="Deseos" asp-action="Index" title="Mi Lista de Deseos">
+                                    <i class="bi bi-heart-fill fs-5 align-middle"></i>
+                                </a>
+                            </li>
+                        }
+
+                        <li class="nav-item me-3">
+                            <a class="nav-link text-white fw-bold" asp-controller="Carrito" asp-action="Index">
+                                <i class="bi bi-cart3 fs-5 align-middle me-1"></i>
+                                <span class="badge bg-danger rounded-pill">@totalItems</span>
+                            </a>
+                        </li>
+
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-light fw-bold px-3 py-2 border rounded-pill" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-person-circle fs-5 align-middle me-1"></i> @User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="userDropdown">
+                                    <li><a class="dropdown-item fw-bold text-primary py-2" asp-controller="Pedidos" asp-action="Index"><i class="bi bi-box-seam me-2"></i>Mis Pedidos</a></li>
+                                    <li><a class="dropdown-item fw-bold text-danger py-2" asp-controller="Deseos" asp-action="Index"><i class="bi bi-heart-fill me-2"></i>Lista de Deseos</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            <button type="submit" class="dropdown-item text-danger fw-bold py-2"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
                         }
                         else
                         {
@@ -56,17 +90,11 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // Lógica de Notificaciones Elegantes
         $(document).ready(function() {
             var exito = '@TempData["Exito"]';
             var error = '@TempData["Error"]';
-
-            if (exito) {
-                Swal.fire({ icon: 'success', title: '¡Éxito!', text: exito, timer: 2500, showConfirmButton: false });
-            }
-            if (error) {
-                Swal.fire({ icon: 'error', title: 'Atención', text: error });
-            }
+            if (exito) { Swal.fire({ icon: 'success', title: '¡Éxito!', text: exito, timer: 2500, showConfirmButton: false }); }
+            if (error) { Swal.fire({ icon: 'error', title: 'Atención', text: error }); }
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)

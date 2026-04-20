@@ -1,42 +1,49 @@
 ﻿@model List<PIA_PD.Models.CarritoItem>
+@using PIA_PD.Extensions
 @{
     ViewData["Title"] = "Mi Carrito";
-    decimal totalVenta = Model?.Sum(i => i.Precio * i.Cantidad) ?? 0;
+    decimal subtotal = Model?.Sum(i => i.Precio * i.Cantidad) ?? 0;
+
+    // Leemos el cupón si es que hay uno
+    var cupon = Context.Session.Get<PIA_PD.Models.Cupon>("MiCupon");
+    decimal descuento = cupon != null ? subtotal * (cupon.PorcentajeDescuento / 100m) : 0;
+    decimal totalVenta = subtotal - descuento;
 }
 
-<div class="container mt-5">
-    <h2 class="fw-bold mb-4"><i class="bi bi-cart-check me-2"></i>Tu Carrito de Compras</h2>
+<div class="container mt-5 mb-5">
+    <h2 class="fw-bold mb-4 text-primary"><i class="bi bi-cart-check me-2"></i>Tu Carrito de Compras</h2>
 
     @if (Model == null || !Model.Any())
     {
-        <div class="text-center py-5">
+        <div class="text-center py-5 bg-light rounded shadow-sm border">
             <i class="bi bi-cart-x display-1 text-muted"></i>
-            <p class="fs-4 mt-3">Tu carrito está vacío.</p>
-            <a asp-controller="Home" asp-action="Index" class="btn btn-primary rounded-pill px-4">Ir a buscar libros</a>
+            <p class="fs-4 mt-3 fw-bold">Tu carrito está vacío.</p>
+            <p class="text-muted">Parece que aún no has encontrado el libro indicado.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary rounded-pill px-4 mt-2">Explorar Catálogo</a>
         </div>
     }
     else
     {
-        <div class="row">
+        <div class="row g-4">
             <div class="col-lg-8">
                 @foreach (var item in Model)
                 {
-                    <div class="card mb-3 shadow-sm border-0">
-                        <div class="row g-0 align-items-center">
-                            <div class="col-md-2 text-center p-2">
-                                <img src="@item.PortadaUrl" class="img-fluid rounded" style="max-height: 120px;">
+                    <div class="card mb-3 shadow-sm border-0 transition-hover">
+                        <div class="row g-0 align-items-center p-2">
+                            <div class="col-md-2 text-center">
+                                <img src="@item.PortadaUrl" class="img-fluid rounded shadow-sm" style="max-height: 100px;">
                             </div>
                             <div class="col-md-6">
-                                <div class="card-body">
-                                    <h5 class="card-title fw-bold">@item.Titulo</h5>
-                                    <p class="text-success fw-bold mb-0">$@item.Precio.ToString("0.0000") MXN</p>
+                                <div class="card-body py-2">
+                                    <h5 class="card-title fw-bold mb-1 text-dark">@item.Titulo</h5>
+                                    <p class="text-primary fw-bold mb-0 fs-5">$@item.Precio.ToString("0.00")</p>
                                 </div>
                             </div>
                             <div class="col-md-2 text-center">
-                                <span class="badge bg-light text-dark border p-2">Cant: @item.Cantidad</span>
+                                <span class="badge bg-light text-dark border p-2 fs-6">Cant: @item.Cantidad</span>
                             </div>
                             <div class="col-md-2 text-center">
-                                <a asp-action="Eliminar" asp-route-id="@item.LibroId" class="btn btn-link text-danger"><i class="bi bi-trash3 fs-5"></i></a>
+                                <a asp-action="Eliminar" asp-route-id="@item.LibroId" class="btn btn-outline-danger rounded-circle"><i class="bi bi-trash3"></i></a>
                             </div>
                         </div>
                     </div>
@@ -44,20 +51,56 @@
             </div>
 
             <div class="col-lg-4">
-                <div class="card shadow border-0 p-4 bg-light">
-                    <h4 class="fw-bold border-bottom pb-3">Resumen</h4>
-                    <div class="d-flex justify-content-between fs-4 fw-bold mb-4">
-                        <span>Total:</span>
-                        <span class="text-primary">$@totalVenta.ToString("0.0000")</span>
+                <div class="card shadow border-0 bg-light sticky-top" style="top: 20px;">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold border-bottom pb-3 mb-4"><i class="bi bi-receipt me-2"></i>Resumen</h4>
+
+                        <div class="d-flex justify-content-between mb-3 text-muted">
+                            <span>Subtotal:</span>
+                            <span class="fw-bold">$@subtotal.ToString("0.00")</span>
+                        </div>
+
+                        @if (cupon != null)
+                        {
+                            <div class="d-flex justify-content-between mb-3 text-success">
+                                <span>
+                                    <i class="bi bi-tag-fill me-1"></i>Cupón (@cupon.Codigo):
+                                    <br><a asp-action="RemoverCupon" class="small text-danger text-decoration-none">Quitar cupón</a>
+                                </span>
+                                <span class="fw-bold">-$@descuento.ToString("0.00") (-@cupon.PorcentajeDescuento%)</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <form asp-action="AplicarCupon" method="post" class="mb-4">
+                                <div class="input-group shadow-sm rounded-pill overflow-hidden">
+                                    <input type="text" name="codigo" class="form-control border-0" placeholder="Código de descuento" required>
+                                    <button type="submit" class="btn btn-dark px-3 fw-bold border-0">Aplicar</button>
+                                </div>
+                                <div class="form-text small mt-2"><i class="bi bi-info-circle me-1"></i>Pista: Prueba con 'PROFE100'</div>
+                            </form>
+                        }
+
+                        <div class="d-flex justify-content-between fs-4 fw-bold mb-4 border-top pt-3">
+                            <span>Total:</span>
+                            <span class="text-primary">$@totalVenta.ToString("0.00")</span>
+                        </div>
+
+                        <a asp-action="Confirmar" class="btn btn-primary btn-lg w-100 rounded-pill mb-3 shadow">
+                            Continuar <i class="bi bi-arrow-right ms-2"></i>
+                        </a>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary w-100 rounded-pill">Seguir comprando</a>
                     </div>
-
-                    <a asp-action="Confirmar" class="btn btn-primary btn-lg w-100 rounded-pill mb-3 shadow">
-                        Continuar al Pago <i class="bi bi-arrow-right ms-2"></i>
-                    </a>
-
-                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary w-100 rounded-pill">Seguir comprando</a>
                 </div>
             </div>
         </div>
     }
 </div>
+
+<style>
+    .transition-hover:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        transition: all .3s ease;
+    }
+</style>
