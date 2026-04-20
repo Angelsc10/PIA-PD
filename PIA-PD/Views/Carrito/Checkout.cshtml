@@ -24,11 +24,11 @@
                             <p class="text-muted small mb-4">¿A dónde enviaremos tu recibo y las notificaciones de tu pedido?</p>
 
                             <div class="form-floating mb-3">
-                                <input type="email" name="Email" class="form-control" placeholder="Email" value="@User.Identity.Name" required>
+                                <input type="email" id="Email" name="Email" class="form-control" placeholder="Email" value="@User.Identity.Name" required>
                                 <label>Correo Electrónico</label>
                             </div>
                             <div class="form-floating mb-4">
-                                <input type="tel" name="Telefono" class="form-control" placeholder="Tel" required pattern="[0-9]{10}">
+                                <input type="text" id="Telefono" name="Telefono" class="form-control" placeholder="Tel" required maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                                 <label>Número de Teléfono Celular (10 dígitos)</label>
                             </div>
                             <button type="button" class="btn btn-primary w-100 rounded-pill btn-lg shadow-sm fw-bold" onclick="goToStep(2)">
@@ -45,13 +45,13 @@
                             <div class="row">
                                 <div class="col-md-8 mb-3">
                                     <div class="form-floating">
-                                        <input type="text" name="Calle" class="form-control" placeholder="Calle" required>
+                                        <input type="text" id="Calle" name="Calle" class="form-control" placeholder="Calle" required>
                                         <label>Calle, Número Exterior e Interior</label>
                                     </div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <div class="form-floating">
-                                        <input type="text" name="CP" class="form-control" placeholder="CP" required pattern="[0-9]{5}">
+                                        <input type="text" id="CP" name="CP" class="form-control" placeholder="CP" required maxlength="5" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                                         <label>Código Postal</label>
                                     </div>
                                 </div>
@@ -59,13 +59,13 @@
                             <div class="row mb-4">
                                 <div class="col-md-6 mb-3">
                                     <div class="form-floating">
-                                        <input type="text" name="Ciudad" class="form-control" placeholder="Ciudad" required>
+                                        <input type="text" id="Ciudad" name="Ciudad" class="form-control" placeholder="Ciudad" required>
                                         <label>Ciudad / Municipio</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <div class="form-floating">
-                                        <input type="text" name="Estado" class="form-control" placeholder="Estado" required>
+                                        <input type="text" id="Estado" name="Estado" class="form-control" placeholder="Estado" required>
                                         <label>Estado / Provincia</label>
                                     </div>
                                 </div>
@@ -95,11 +95,11 @@
                                 <div id="formTarjeta" class="p-4 bg-light rounded mb-4 border">
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold text-muted">Nombre del Titular</label>
-                                        <input type="text" class="form-control" placeholder="Ej. Juan Pérez" required id="reqName">
+                                        <input type="text" class="form-control" placeholder="Ej. Juan Pérez" required id="reqName" oninput="this.value = this.value.replace(/[0-9]/g, '');">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold text-muted">Número de Tarjeta</label>
-                                        <input type="text" class="form-control" placeholder="0000 0000 0000 0000" maxlength="16" required id="reqNum">
+                                        <input type="text" class="form-control" placeholder="0000 0000 0000 0000" maxlength="16" required id="reqNum" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                                     </div>
                                     <div class="row">
                                         <div class="col-6">
@@ -108,7 +108,7 @@
                                         </div>
                                         <div class="col-6">
                                             <label class="form-label small fw-bold text-muted">CVV</label>
-                                            <input type="password" class="form-control" placeholder="123" maxlength="3" required id="reqCvv">
+                                            <input type="password" class="form-control" placeholder="123" maxlength="3" required id="reqCvv" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                                         </div>
                                     </div>
                                 </div>
@@ -154,40 +154,65 @@
 </style>
 
 <script>
-    // Función para navegar entre los pasos validando los campos
+    // --- MAGIA: Formato automático de la fecha (MM/YY) ---
+    document.getElementById('reqDate').addEventListener('input', function (e) {
+        let val = this.value.replace(/[^0-9]/g, ''); // Quita todo lo que no sea número
+        if (val.length >= 3) {
+            // Cuando llega a 3 números, le inserta la diagonal
+            val = val.substring(0, 2) + '/' + val.substring(2, 4);
+        }
+        this.value = val;
+    });
+
+    // --- VALIDACIONES ESTRICTAS PARA AVANZAR DE PASO ---
     function goToStep(s) {
-        // Validación súper sencilla antes de avanzar
+
+        // Antes de ir al paso 2, validar el paso 1
         if (s === 2) {
-            const tel = document.querySelector('input[name="Telefono"]').value;
-            if (!tel || tel.length < 10) {
-                alert("Por favor ingresa un número de teléfono válido de 10 dígitos.");
+            const email = document.getElementById('Email').value.trim();
+            const tel = document.getElementById('Telefono').value.trim();
+
+            if (!email) {
+                Swal.fire('Falta Información', 'Por favor ingresa tu Correo Electrónico.', 'warning');
                 return;
             }
-        }
-        if (s === 3) {
-            const calle = document.querySelector('input[name="Calle"]').value;
-            const cp = document.querySelector('input[name="CP"]').value;
-            if (!calle || !cp) {
-                alert("Por favor completa los campos de dirección y código postal.");
+            if (!tel || tel.length < 10) {
+                Swal.fire('Falta Información', 'Ingresa un número de Teléfono válido de 10 dígitos.', 'warning');
                 return;
             }
         }
 
+        // Antes de ir al paso 3, validar el paso 2
+        if (s === 3) {
+            const calle = document.getElementById('Calle').value.trim();
+            const cp = document.getElementById('CP').value.trim();
+            const ciudad = document.getElementById('Ciudad').value.trim();
+            const estado = document.getElementById('Estado').value.trim();
+
+            if (!calle || !cp || !ciudad || !estado) {
+                Swal.fire('Falta Información', 'Por favor completa todos los campos de tu Dirección.', 'warning');
+                return;
+            }
+            if (cp.length < 5) {
+                Swal.fire('Falta Información', 'El Código Postal debe ser de 5 dígitos.', 'warning');
+                return;
+            }
+        }
+
+        // Ocultar todos y mostrar el correcto
         document.getElementById('step1').classList.add('d-none');
         document.getElementById('step2').classList.add('d-none');
         document.getElementById('step3').classList.add('d-none');
 
         document.getElementById('step' + s).classList.remove('d-none');
 
-        // Animamos la barra de progreso
         document.getElementById('progreso').style.width = (s === 1 ? 33 : s === 2 ? 66 : 100) + '%';
     }
 
-    // Muestra u oculta los campos de la tarjeta según la opción elegida
+    // Activar/Desactivar validación de tarjeta
     function togglePay(id) {
         document.getElementById('formTarjeta').classList.add('d-none');
 
-        // Quitar obligatoriedad a la tarjeta si no está seleccionada
         document.getElementById('reqName').required = false;
         document.getElementById('reqNum').required = false;
         document.getElementById('reqDate').required = false;

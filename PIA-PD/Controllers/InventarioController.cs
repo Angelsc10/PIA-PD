@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PIA_PD.Data;
 using PIA_PD.Models;
+using PIA_PD.Services;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace PIA_PD.Controllers
 {
@@ -10,75 +14,136 @@ namespace PIA_PD.Controllers
     public class InventarioController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly IWebHostEnvironment _hostEnvironment;
+        private readonly LibroApiService _apiService;
+        private readonly IWebHostEnvironment _hostEnvironment; // Para guardar imágenes localmente
 
-        public InventarioController(ApplicationDbContext context, IWebHostEnvironment hostEnvironment)
+        public InventarioController(ApplicationDbContext context, LibroApiService apiService, IWebHostEnvironment hostEnvironment)
         {
             _context = context;
+            _apiService = apiService;
             _hostEnvironment = hostEnvironment;
         }
 
         public async Task<IActionResult> Index()
         {
-            var libros = await _context.LibrosInternos.ToListAsync();
-            return View(libros);
+            var librosLocales = await _context.LibrosInternos.ToListAsync();
+            var librosApi = await _apiService.ObtenerLibrosDestacadosAsync();
+            var todosLosLibros = librosLocales.Concat(librosApi).ToList();
+            return View(todosLosLibros);
         }
 
         [HttpGet]
-        public IActionResult Crear() => View();
+        public IActionResult Crear()
+        {
+            return View();
+        }
 
+        // CAMBIO: Ahora recibe "imagenPortada" y maneja el guardado local y el placeholder
         [HttpPost]
         public async Task<IActionResult> Crear(Libro libro, IFormFile? imagenPortada)
         {
-            ModelState.Remove("imagenPortada");
-            ModelState.Remove("PortadaUrl");
+            if (ModelState.IsValid)
+            {
+                // Si el usuario subió una foto desde su PC...
+                if (imagenPortada != null)
+                {
+                    string carpetaDestino = Path.Combine(_hostEnvironment.WebRootPath, "img", "portadas");
+                    if (!Directory.Exists(carpetaDestino)) Directory.CreateDirectory(carpetaDestino);
+
+                    // Creamos un nombre único para que no choquen dos fotos iguales
+                    string nombreArchivo = Guid.NewGuid().ToString() + "_" + imagenPortada.FileName;
+                    string rutaFinal = Path.Combine(carpetaDestino, nombreArchivo);
+
+                    using (var fileStream = new FileStream(rutaFinal, FileMode.Create))
+                    {
+                        await imagenPortada.CopyToAsync(fileStream);
+                    }
+                    libro.PortadaUrl = "/img/portadas/" + nombreArchivo;
+                }
+                // Si no subió foto y tampoco puso Link, ponemos el Placeholder "Sin Portada"
+                else if (string.IsNullOrWhiteSpace(libro.PortadaUrl))
+                {
+                    libro.PortadaUrl = "https://via.placeholder.com/300x400?text=Sin+Portada";
+                }
+
+                libro.Id = Guid.NewGuid().ToString();
+                _context.LibrosInternos.Add(libro);
+                await _context.SaveChangesAsync();
+                TempData["Exito"] = "Libro registrado correctamente.";
+                return RedirectToAction(nameof(Index));
+            }
+            TempData["Error"] = "Por favor, verifica que los datos principales estén llenos.";
+            return View(libro);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Editar(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return NotFound();
+
+            if (id.StartsWith("OL-"))
+            {
+                TempData["Error"] = "Los libros de la API mundial son de solo lectura.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var libro = await _context.LibrosInternos.FindAsync(id);
+            if (libro == null) return NotFound();
+
+            return View(libro);
+        }
+
+        // CAMBIO: También en el Editar aplicamos la misma lógica para fotos
+        [HttpPost]
+        public async Task<IActionResult> Editar(string id, Libro libro, IFormFile? imagenPortada)
+        {
+            if (id != libro.Id) return NotFound();
 
             if (ModelState.IsValid)
             {
-                try
+                if (imagenPortada != null)
                 {
-                    if (string.IsNullOrEmpty(libro.Id)) libro.Id = Guid.NewGuid().ToString();
+                    string carpetaDestino = Path.Combine(_hostEnvironment.WebRootPath, "img", "portadas");
+                    if (!Directory.Exists(carpetaDestino)) Directory.CreateDirectory(carpetaDestino);
 
-                    if (imagenPortada != null && imagenPortada.Length > 0)
+                    string nombreArchivo = Guid.NewGuid().ToString() + "_" + imagenPortada.FileName;
+                    string rutaFinal = Path.Combine(carpetaDestino, nombreArchivo);
+
+                    using (var fileStream = new FileStream(rutaFinal, FileMode.Create))
                     {
-                        string webRootPath = _hostEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                        string carpetaDestino = Path.Combine(webRootPath, "img", "portadas");
-                        if (!Directory.Exists(carpetaDestino)) Directory.CreateDirectory(carpetaDestino);
-
-                        string nombreArchivo = Guid.NewGuid().ToString() + Path.GetExtension(imagenPortada.FileName);
-                        using (var fileStream = new FileStream(Path.Combine(carpetaDestino, nombreArchivo), FileMode.Create))
-                        {
-                            await imagenPortada.CopyToAsync(fileStream);
-                        }
-                        libro.PortadaUrl = "/img/portadas/" + nombreArchivo;
+                        await imagenPortada.CopyToAsync(fileStream);
                     }
-                    else if (string.IsNullOrEmpty(libro.PortadaUrl))
-                    {
-                        libro.PortadaUrl = "https://via.placeholder.com/300x400?text=Sin+Portada";
-                    }
-
-                    _context.LibrosInternos.Add(libro);
-                    await _context.SaveChangesAsync();
-                    TempData["Exito"] = "Libro registrado con éxito.";
-                    return RedirectToAction(nameof(Index));
+                    libro.PortadaUrl = "/img/portadas/" + nombreArchivo;
                 }
-                catch (Exception ex)
+                else if (string.IsNullOrWhiteSpace(libro.PortadaUrl))
                 {
-                    TempData["Error"] = "Error al guardar: " + ex.Message;
+                    libro.PortadaUrl = "https://via.placeholder.com/300x400?text=Sin+Portada";
                 }
+
+                _context.Update(libro);
+                await _context.SaveChangesAsync();
+                TempData["Exito"] = "Libro actualizado correctamente.";
+                return RedirectToAction(nameof(Index));
             }
+            TempData["Error"] = "Verifica los datos ingresados.";
             return View(libro);
         }
 
         [HttpPost]
         public async Task<IActionResult> Eliminar(string id)
         {
+            if (id.StartsWith("OL-"))
+            {
+                TempData["Error"] = "No puedes borrar libros de la API mundial.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var libro = await _context.LibrosInternos.FindAsync(id);
             if (libro != null)
             {
                 _context.LibrosInternos.Remove(libro);
                 await _context.SaveChangesAsync();
-                TempData["Exito"] = "Libro eliminado.";
+                TempData["Exito"] = "Libro eliminado del inventario.";
             }
             return RedirectToAction(nameof(Index));
         }

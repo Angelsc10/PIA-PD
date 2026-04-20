@@ -1,6 +1,5 @@
 ﻿@{
     ViewData["Title"] = "Panel de Control";
-    // Recibimos la inteligencia de negocios desde el controlador
     var alertasStock = ViewBag.AlertasStock as List<PIA_PD.Models.Libro>;
     var topVentas = ViewBag.TopVentas as List<PIA_PD.Controllers.TopVentaDto>;
 }
@@ -34,7 +33,8 @@
                 <div class="card-header bg-danger text-white fw-bold py-3">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i> Alertas de Stock Bajo
                 </div>
-                <div class="card-body p-0">
+
+                <div class="card-body p-0 alerts-stock-container">
                     @if (alertasStock != null && alertasStock.Any())
                     {
                         <ul class="list-group list-group-flush">
@@ -78,17 +78,17 @@
                             }
                             @foreach (var venta in topVentas)
                             {
-                                string colorMedalla = rank == 1 ? "gold" : rank == 2 ? "silver" : "#cd7f32"; // Oro, Plata, Bronce
-                                                                                                             <li class="list-group-item d-flex justify-content-between align-items-center py-4 bg-light border-bottom">
-                                                                                                                 <div class="d-flex align-items-center">
-                                                                                                                     <h4 class="mb-0 me-3 fw-bold" style="color: @colorMedalla;">#@rank</h4>
-                                                                                                                     <span class="fw-bold text-dark fs-5 text-truncate" style="max-width: 280px;">@venta.Titulo</span>
-                                                                                                                 </div>
-                                                                                                                 <div class="text-end">
-                                                                                                                     <span class="d-block fw-bold text-success fs-5">@venta.CantidadVendida</span>
-                                                                                                                     <span class="small text-muted">unidades</span>
-                                                                                                                 </div>
-                                                                                                             </li>
+                                string colorMedalla = rank == 1 ? "gold" : rank == 2 ? "silver" : "#cd7f32";
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-4 bg-light border-bottom">
+                                    <div class="d-flex align-items-center">
+                                        <h4 class="mb-0 me-3 fw-bold" style="color: @colorMedalla;">#@rank</h4>
+                                        <span class="fw-bold text-dark fs-5 text-truncate" style="max-width: 280px;">@venta.Titulo</span>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="d-block fw-bold text-success fs-5">@venta.CantidadVendida</span>
+                                        <span class="small text-muted">unidades</span>
+                                    </div>
+                                </li>
                                 rank++;
                             }
                         </ul>
@@ -131,13 +131,21 @@
             <div class="card shadow-sm border-0 bg-dark text-white h-100 transition-hover">
                 <div class="card-body text-center py-4">
                     <i class="bi bi-receipt display-4 mb-2"></i>
-                    <h4 class="card-title fw-bold">Historial y Excel</h4>
+                    <h4 class="card-title fw-bold">Historial</h4>
                     <a asp-action="Ventas" class="btn btn-light rounded-pill px-4 mt-2 fw-bold text-dark shadow-sm w-100">Consultar Caja</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .transition-hover:hover {
+        transform: translateY(-8px);
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    }
+</style>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

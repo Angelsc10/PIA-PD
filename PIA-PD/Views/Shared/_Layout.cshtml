@@ -15,7 +15,7 @@
         .offcanvas-custom {
             width: 450px !important;
         }
-        /* Doble arroba para que no marque error en C# */
+
         @@media (max-width: 576px) {
             .offcanvas-custom {
                 width: 100% !important;
@@ -27,6 +27,43 @@
             height: 80px;
             object-fit: cover;
             border-radius: 5px;
+        }
+
+        /* Bajar el icono del carrito para que no se corte la burbuja */
+        .cart-icon-container {
+            margin-top: 5px;
+        }
+
+        <style >
+        /* ... Tus estilos existentes ... */
+        @@media (max-width: 576px) {
+            .offcanvas-custom
+
+        {
+            width: 100% !important;
+        }
+
+        }
+
+        .cart-img {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        /* Bajar el icono del carrito para que no se corte la burbuja */
+        .cart-icon-container {
+            margin-top: 5px;
+        }
+
+        /* --- ESTA ES LA NUEVA FUNCIÓN DE DISEÑO --- */
+        /* Seleccionamos el cuerpo de la tarjeta de alertas */
+        .alerts-stock-container {
+            /* Limitamos la altura máxima. Puedes ajustar este valor si lo prefieres */
+            max-height: 300px;
+            /* Agregamos el scroll vertical automático si la lista supera la altura */
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -42,9 +79,13 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        @if (User.IsInRole("Admin") || User.IsInRole("Empleado"))
+                        @if (User.IsInRole("Admin"))
                         {
-                            <li class="nav-item"><a class="nav-link text-warning fw-bold ms-2" asp-controller="Admin" asp-action="Index">MODO ADMINISTRATIVO</a></li>
+                            <li class="nav-item"><a class="nav-link text-warning fw-bold ms-2" asp-controller="Admin" asp-action="Index">MODO ADMINISTRADOR</a></li>
+                        }
+                        else if (User.IsInRole("Empleado"))
+                        {
+                            <li class="nav-item"><a class="nav-link text-info fw-bold ms-2" asp-controller="Admin" asp-action="Index">MODO EMPLEADO</a></li>
                         }
                         else
                         {
@@ -62,10 +103,10 @@
                                     </a>
                                 </li>
                             }
-                            <li class="nav-item me-3">
+                            <li class="nav-item me-3 cart-icon-container">
                                 <a class="nav-link text-white position-relative" href="javascript:void(0)" onclick="openCart()">
                                     <i class="bi bi-cart3 fs-4"></i>
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cartBadge">0</span>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger mt-1" id="cartBadge">0</span>
                                 </a>
                             </li>
                         }
@@ -99,9 +140,32 @@
 
     <main role="main" class="pb-3 flex-grow-1">@RenderBody()</main>
 
+    @{
+        var isCheckout = ViewContext.RouteData.Values["Action"]?.ToString() == "Checkout";
+    }
+
     @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
     {
-        <button class="btn btn-primary rounded-circle shadow-lg position-fixed d-flex justify-content-center align-items-center" type="button" onclick="openChat()" style="bottom: 30px; right: 30px; width: 65px; height: 65px; z-index: 1000;"><i class="bi bi-robot fs-2"></i></button>
+
+        @if (!isCheckout)
+        {
+            <button class="btn btn-primary rounded-circle shadow-lg position-fixed d-flex justify-content-center align-items-center" type="button" onclick="openChat()" style="bottom: 30px; right: 30px; width: 65px; height: 65px; z-index: 1000;"><i class="bi bi-robot fs-2"></i></button>
+
+            <div class="offcanvas offcanvas-end offcanvas-custom shadow" tabindex="-1" id="chatSidebar">
+                <div class="offcanvas-header bg-primary text-white">
+                    <h5 class="offcanvas-title fw-bold"><i class="bi bi-robot me-2"></i>Asistente Librero</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+                </div>
+                <div class="offcanvas-body d-flex flex-column bg-light">
+                    <div id="chatBox" class="flex-grow-1 overflow-auto p-3 mb-3 bg-white rounded border" style="max-height: 70vh;"></div>
+
+                    <div class="input-group shadow-sm">
+                        <input type="text" id="chatInput" class="form-control border-0 px-3" placeholder="¿Qué libro buscas?" onkeypress="handleEnter(event)">
+                        <button class="btn btn-primary" onclick="sendMsg()"><i class="bi bi-send"></i></button>
+                    </div>
+                </div>
+            </div>
+        }
 
         <div class="offcanvas offcanvas-start offcanvas-custom shadow" tabindex="-1" id="cartSidebar">
             <div class="offcanvas-header bg-dark text-white">
@@ -111,42 +175,26 @@
             <div class="offcanvas-body d-flex flex-column" id="cartBody">
             </div>
         </div>
-
-        <div class="offcanvas offcanvas-end offcanvas-custom shadow" tabindex="-1" id="chatSidebar">
-            <div class="offcanvas-header bg-primary text-white">
-                <h5 class="offcanvas-title fw-bold"><i class="bi bi-robot me-2"></i>Asistente Librero</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
-            </div>
-            <div class="offcanvas-body d-flex flex-column bg-light">
-                <div id="chatBox" class="flex-grow-1 overflow-auto p-3 mb-3 bg-white rounded border" style="max-height: 70vh;"></div>
-                <div class="input-group shadow-sm">
-                    <input type="text" id="chatInput" class="form-control border-0 px-3" placeholder="¿Qué libro buscas?">
-                    <button class="btn btn-primary" onclick="sendMsg()"><i class="bi bi-send"></i></button>
-                </div>
-            </div>
-        </div>
     }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        const cartOff = new bootstrap.Offcanvas('#cartSidebar');
-        const chatOff = new bootstrap.Offcanvas('#chatSidebar');
+        const cartOff = document.getElementById('cartSidebar') ? new bootstrap.Offcanvas('#cartSidebar') : null;
+        const chatOff = document.getElementById('chatSidebar') ? new bootstrap.Offcanvas('#chatSidebar') : null;
 
-        // Lógica de apertura exclusiva
-        function openCart() { chatOff.hide(); refreshCart(); cartOff.show(); }
-        function openChat() { cartOff.hide(); chatOff.show(); }
+        function openCart() { if(chatOff) chatOff.hide(); refreshCart(); if(cartOff) cartOff.show(); }
+        function openChat() { if(cartOff) cartOff.hide(); if(chatOff) chatOff.show(); }
 
-        // Actualizar el carrito mediante AJAX
         function refreshCart() {
+            if(!document.getElementById('cartBody')) return;
             $.get('/Carrito/GetCarritoPartial', function(data) {
                 $('#cartBody').html(data);
                 $('#cartBadge').text($('#cartItemCount').val() || 0);
             });
         }
 
-        // Agregar libros y lanzar notificación sin recargar
         function addToCart(id, titulo, precio, url) {
             $.post('/Carrito/AgregarAjax', { id, titulo, precio, portadaUrl: url }, function(res) {
                 if(res.success) {
@@ -159,28 +207,82 @@
                 else { Swal.fire('Error', res.message, 'error'); }
             });
         }
+ 
+        function toggleWishlist(id, titulo, precio, url, btnElement) {
+            $.post('/Deseos/AlternarAjax', { id: id, titulo: titulo, precio: precio, portadaUrl: url }, function(res) {
+                if(res.success) {
+                    Swal.fire({
+                        icon: res.agregado ? 'success' : 'info',
+                        title: res.agregado ? '¡Favorito!' : 'Removido',
+                        text: res.message,
+                        toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
+                    });
 
-        // Alerta de confirmación general
+                    // Magia visual: rellenar o vaciar el corazón
+                    let icon = $(btnElement).find('i');
+                    if(res.agregado) {
+                        icon.removeClass('bi-heart').addClass('bi-heart-fill');
+                    } else {
+                        icon.removeClass('bi-heart-fill').addClass('bi-heart');
+                    }
+                }
+            });
+        }
+
+        // Alertas en Español
         $(document).on('submit', '.form-eliminar', function(e) {
             e.preventDefault();
-            Swal.fire({ title: '¿Seguro?', text: "Se borrará definitivamente.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Eliminar' })
+            Swal.fire({ title: '¿Estás seguro?', text: "Esta acción no se puede deshacer.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' })
             .then((res) => { if(res.isConfirmed) this.submit(); });
         });
 
-        // Chatbot
+        // --- MAGIA DEL CHATBOT: MEMORIA Y COLORES ---
+        function loadChatHistory() {
+            const box = document.getElementById('chatBox');
+            if (box) {
+                const history = sessionStorage.getItem('chatHistory');
+                if (history) {
+                    box.innerHTML = history;
+                } else {
+                    box.innerHTML = `<div class="p-2 mb-2 bg-primary text-white rounded w-75 shadow-sm">¡Hola! ¿En qué puedo ayudarte hoy?</div>`;
+                }
+                box.scrollTop = box.scrollHeight;
+            }
+        }
+
+        function handleEnter(e) { if(e.key === 'Enter') sendMsg(); }
+
         async function sendMsg() {
             const inp = document.getElementById('chatInput');
             const box = document.getElementById('chatBox');
-            if(!inp.value.trim()) return;
+            if(!inp || !inp.value.trim()) return;
+
             box.innerHTML += `<div class="p-2 mb-2 bg-light text-end ms-auto w-75 rounded border shadow-sm">${inp.value}</div>`;
             const txt = inp.value; inp.value = '';
-            const res = await fetch(`/Chatbot/Preguntar?mensaje=${encodeURIComponent(txt)}`);
-            const data = await res.json();
-            box.innerHTML += `<div class="p-2 mb-2 bg-primary text-white rounded w-75 shadow-sm">${data.respuesta}</div>`;
+
+            sessionStorage.setItem('chatHistory', box.innerHTML);
+            box.scrollTop = box.scrollHeight;
+
+            try {
+                const res = await fetch(`/Chatbot/Preguntar?mensaje=${encodeURIComponent(txt)}`);
+                const data = await res.json();
+
+                // Expresión Regular para envolver los precios en amarillo ($250.00)
+                let textoDecorado = data.respuesta.replace(/\$([0-9]+(\.[0-9]{1,2})?)/g, '<span class="badge bg-warning text-dark fs-6 ms-1">$$$1</span>');
+
+                box.innerHTML += `<div class="p-2 mb-2 bg-primary text-white rounded w-75 shadow-sm">${textoDecorado}</div>`;
+            } catch {
+                box.innerHTML += `<div class="p-2 mb-2 bg-danger text-white rounded w-75 shadow-sm">Error de conexión.</div>`;
+            }
+
+            sessionStorage.setItem('chatHistory', box.innerHTML);
             box.scrollTop = box.scrollHeight;
         }
 
-        $(document).ready(refreshCart);
+        $(document).ready(function() {
+            refreshCart();
+            loadChatHistory();
+        });
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

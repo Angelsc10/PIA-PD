@@ -3,7 +3,12 @@
     ViewData["Title"] = "Nómina de Staff";
 }
 
-<div class="container mt-5">
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h2 class="fw-bold text-primary"><i class="bi bi-people-fill me-2"></i>Recursos Humanos</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill shadow-sm"><i class="bi bi-arrow-left me-1"></i> Volver al Panel</a>
+    </div>
+
     <div class="row g-4">
         <div class="col-md-4">
             <div class="card shadow border-0 p-4 bg-white h-100">
@@ -30,24 +35,34 @@
                             <tr>
                                 <th>Usuario</th>
                                 <th>Estado</th>
-                                <th>Acción</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var emp in Model)
+                            @if (!Model.Any())
                             {
-                                <tr>
-                                    <td class="fw-bold">@emp.UserName</td>
-                                    <td><span class="badge bg-success rounded-pill px-3">Activo</span></td>
-                                    <td>
-                                        <form asp-action="BajaEmpleado" method="post" class="form-eliminar">
-                                            <input type="hidden" name="id" value="@emp.Id" />
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                                <i class="bi bi-person-x"></i> Baja
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
+                                <tr><td colspan="3" class="text-muted py-4">No hay empleados registrados.</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var emp in Model)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@emp.UserName</td>
+                                        <td><span class="badge bg-success rounded-pill px-3">Activo</span></td>
+                                        <td>
+                                            <a asp-action="EditarEmpleado" asp-route-id="@emp.Id" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-1">
+                                                <i class="bi bi-pencil-square"></i> Editar
+                                            </a>
+                                            <form asp-action="BajaEmpleado" method="post" class="form-eliminar d-inline">
+                                                <input type="hidden" name="id" value="@emp.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                    <i class="bi bi-person-x"></i> Baja
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>

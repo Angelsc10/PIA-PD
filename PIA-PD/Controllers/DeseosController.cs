@@ -6,7 +6,7 @@ using PIA_PD.Models;
 
 namespace PIA_PD.Controllers
 {
-    [Authorize] // Blindaje: Solo usuarios con cuenta pueden tener lista de deseos
+    [Authorize] // Solo usuarios con cuenta pueden tener lista de deseos
     public class DeseosController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -16,60 +16,48 @@ namespace PIA_PD.Controllers
             _context = context;
         }
 
-        // 1. Mostrar la lista de deseos del usuario
         public async Task<IActionResult> Index()
         {
-            var misDeseos = await _context.Deseos
+            var deseos = await _context.Deseos
                 .Where(d => d.Usuario == User.Identity.Name)
                 .OrderByDescending(d => d.FechaAgregado)
                 .ToListAsync();
-
-            return View(misDeseos);
+            return View(deseos);
         }
 
-        // 2. Agregar o quitar un libro de la lista (Botón de Corazón)
+        // --- EL CÓDIGO NUEVO (AJAX) ---
         [HttpPost]
-        public async Task<IActionResult> Alternar(string id, string titulo, decimal precio, string portadaUrl)
+        public async Task<IActionResult> AlternarAjax(string id, string titulo, decimal precio, string portadaUrl)
         {
-            // Verificamos si ya le había dado "Me gusta"
-            var existente = await _context.Deseos
-                .FirstOrDefaultAsync(d => d.LibroId == id && d.Usuario == User.Identity.Name);
+            var usuario = User.Identity.Name;
 
-            if (existente != null)
+            // Verificamos si el libro ya está en los deseos
+            var deseoExistente = await _context.Deseos
+                .FirstOrDefaultAsync(d => d.LibroId == id && d.Usuario == usuario);
+
+            if (deseoExistente != null)
             {
-                _context.Deseos.Remove(existente);
-                TempData["Exito"] = "Libro eliminado de tu lista de deseos.";
+                // Si ya está, lo quitamos
+                _context.Deseos.Remove(deseoExistente);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, agregado = false, message = "Eliminado de tu Lista de Deseos." });
             }
             else
             {
-                _context.Deseos.Add(new Deseo
+                // Si no está, lo agregamos
+                var nuevoDeseo = new Deseo
                 {
                     LibroId = id,
+                    Usuario = usuario,
                     Titulo = titulo,
                     Precio = precio,
                     PortadaUrl = portadaUrl,
-                    Usuario = User.Identity.Name
-                });
-                TempData["Exito"] = "¡Agregado a tu lista de deseos! ❤️";
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction("Index", "Home");
-        }
-
-        // 3. Eliminar desde la pantalla de la lista de deseos
-        [HttpPost]
-        public async Task<IActionResult> Eliminar(int id)
-        {
-            var deseo = await _context.Deseos.FindAsync(id);
-            // Doble seguridad: Validar que exista y que sea del dueño
-            if (deseo != null && deseo.Usuario == User.Identity.Name)
-            {
-                _context.Deseos.Remove(deseo);
+                    FechaAgregado = DateTime.Now
+                };
+                _context.Deseos.Add(nuevoDeseo);
                 await _context.SaveChangesAsync();
-                TempData["Exito"] = "Libro removido de favoritos.";
+                return Json(new { success = true, agregado = true, message = "¡Agregado a tu Lista de Deseos!" });
             }
-            return RedirectToAction(nameof(Index));
         }
     }
 }

@@ -69,15 +69,9 @@
                                 @if (User.Identity.IsAuthenticated)
                                 {
                                     <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
-                                        <form asp-controller="Deseos" asp-action="Alternar" method="post">
-                                            <input type="hidden" name="id" value="@libro.Id" />
-                                            <input type="hidden" name="titulo" value="@libro.Titulo" />
-                                            <input type="hidden" name="precio" value="@libro.Precio" />
-                                            <input type="hidden" name="portadaUrl" value="@libro.PortadaUrl" />
-                                            <button type="submit" class="btn btn-light rounded-circle shadow text-danger p-2 border-0" title="Guardar en Deseos">
-                                                <i class="bi bi-heart fs-5"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" onclick="toggleWishlist('@libro.Id', '@Html.Raw(libro.Titulo.Replace("'", "\\'"))', @libro.Precio, '@libro.PortadaUrl', this)" class="btn btn-light rounded-circle shadow text-danger p-2 border-0 transition-hover" title="Guardar en Deseos">
+                                            <i class="bi bi-heart fs-5"></i>
+                                        </button>
                                     </div>
                                 }
 

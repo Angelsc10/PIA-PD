@@ -1,6 +1,6 @@
 ﻿@model PIA_PD.Models.Libro
 @{
-    ViewData["Title"] = "Registro de Libro";
+    ViewData["Title"] = "Editar Libro";
 }
 
 <div class="container mt-5 mb-5">
@@ -8,10 +8,12 @@
         <div class="col-md-6">
             <div class="card shadow border-0 p-4">
                 <div class="text-center mb-4 border-bottom pb-3">
-                    <h3 class="fw-bold text-success"><i class="bi bi-journal-plus me-2"></i>Registro de Libro</h3>
+                    <h3 class="fw-bold text-primary"><i class="bi bi-pencil-square me-2"></i>Editar Libro</h3>
                 </div>
 
-                <form asp-action="Crear" method="post" enctype="multipart/form-data">
+                <form asp-action="Editar" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="Id" />
+
                     <div class="form-floating mb-3">
                         <input asp-for="Titulo" class="form-control" placeholder="Título" required />
                         <label asp-for="Titulo">Título del Libro *</label>
@@ -44,29 +46,33 @@
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <input asp-for="Stock" type="number" min="1" class="form-control" placeholder="Stock" required oninput="if(this.value.startsWith('0') || this.value < 0) this.value = '';" />
-                                <label asp-for="Stock">Cantidad inicial *</label>
+                                <label asp-for="Stock">Cantidad actual *</label>
                             </div>
                         </div>
                     </div>
 
                     <div class="p-3 bg-light rounded border mb-4">
-                        <h6 class="fw-bold mb-3"><i class="bi bi-image text-primary me-2"></i>Portada del Libro (Opcional)</h6>
+                        <h6 class="fw-bold mb-3"><i class="bi bi-image text-primary me-2"></i>Actualizar Portada (Opcional)</h6>
+
+                        <div class="mb-3 text-center">
+                            <img src="@Model.PortadaUrl" alt="Portada actual" class="img-thumbnail rounded shadow-sm" style="max-height: 120px;" />
+                            <div class="small text-muted mt-1">Portada Actual</div>
+                        </div>
 
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-muted">Opción 1: Subir imagen desde tu equipo</label>
+                            <label class="form-label small fw-bold text-muted">Opción 1: Subir nueva imagen</label>
                             <input type="file" name="imagenPortada" class="form-control" accept="image/*" />
                         </div>
 
                         <div class="form-floating">
                             <input asp-for="PortadaUrl" class="form-control" placeholder="URL" />
-                            <label asp-for="PortadaUrl">Opción 2: Pega el Link de internet</label>
+                            <label asp-for="PortadaUrl">Opción 2: Link de internet</label>
                         </div>
-                        <div class="form-text small mt-2">Nota: Si dejas ambos en blanco, se asignará una portada genérica.</div>
                     </div>
 
                     <div class="d-flex justify-content-between">
                         <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
-                        <button type="submit" class="btn btn-success rounded-pill px-4 shadow-sm">Guardar Libro</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Actualizar Libro</button>
                     </div>
                 </form>
             </div>

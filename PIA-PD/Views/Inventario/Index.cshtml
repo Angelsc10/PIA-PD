@@ -3,12 +3,12 @@
     ViewData["Title"] = "Gestión de Stock";
 }
 
-<div class="container mt-5">
+<div class="container mt-5 mb-5">
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-box-seam text-success me-2"></i>Control de Inventario</h3>
             <a asp-action="Crear" class="btn btn-success rounded-pill px-4 shadow-sm">
-                <i class="bi bi-plus-lg me-2"></i>Agregar Nuevo Título
+                <i class="bi bi-plus-lg me-2"></i>Registrar Libro
             </a>
         </div>
         <div class="card-body p-0">
@@ -16,9 +16,9 @@
                 <table class="table table-hover align-middle mb-0 text-center">
                     <thead class="table-light">
                         <tr>
+                            <th>Origen</th>
                             <th>Vista</th>
                             <th>Título</th>
-                            <th>Autor</th>
                             <th>Precio</th>
                             <th>Stock</th>
                             <th>Acciones</th>
@@ -28,22 +28,41 @@
                         @foreach (var libro in Model)
                         {
                             <tr>
+                                <td>
+                                    @if (libro.Id.StartsWith("OL-"))
+                                    {
+                                        <span class="badge bg-info text-dark rounded-pill"><i class="bi bi-globe me-1"></i> API</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary rounded-pill"><i class="bi bi-shop me-1"></i> Local</span>
+                                    }
+                                </td>
                                 <td><img src="@libro.PortadaUrl" style="width: 45px; height: 60px; object-fit: cover;" class="rounded shadow-sm"></td>
                                 <td class="fw-bold">@libro.Titulo</td>
-                                <td class="text-muted">@libro.Autor</td>
                                 <td class="fw-bold text-success">$@libro.Precio.ToString("0.00")</td>
                                 <td>
                                     <span class="badge @(libro.Stock < 5 ? "bg-danger" : "bg-dark") rounded-pill px-3 py-2">
-                                        @libro.Stock unidades
+                                        @libro.Stock
                                     </span>
                                 </td>
                                 <td>
-                                    <form asp-action="Eliminar" method="post" class="form-eliminar d-inline">
-                                        <input type="hidden" name="id" value="@libro.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                            <i class="bi bi-trash3"></i> Eliminar
-                                        </button>
-                                    </form>
+                                    @if (libro.Id.StartsWith("OL-"))
+                                    {
+                                        <span class="text-muted small"><i class="bi bi-lock-fill"></i> Solo Lectura</span>
+                                    }
+                                    else
+                                    {
+                                        <a asp-action="Editar" asp-route-id="@libro.Id" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-1">
+                                            <i class="bi bi-pencil-square"></i> Editar
+                                        </a>
+                                        <form asp-action="Eliminar" method="post" class="form-eliminar d-inline">
+                                            <input type="hidden" name="id" value="@libro.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </form>
+                                    }
                                 </td>
                             </tr>
                         }

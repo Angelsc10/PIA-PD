@@ -23,28 +23,32 @@ namespace PIA_PD.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Ponemos "false" por defecto para evitar el error del "RememberMe"
-                var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, false, false);
+                // 1. Verificamos si el usuario existe antes de intentar loguearlo
+                var user = await _userManager.FindByNameAsync(model.UserName)
+                           ?? await _userManager.FindByEmailAsync(model.UserName);
+
+                if (user == null)
+                {
+                    // ALERTA ESPECÍFICA: El usuario está mal
+                    ModelState.AddModelError(string.Empty, "Error: Este nombre de usuario no existe en el sistema.");
+                    return View(model);
+                }
+
+                // 2. Si el usuario existe, verificamos la contraseña
+                var result = await _signInManager.PasswordSignInAsync(user.UserName, model.Password, false, false);
 
                 if (result.Succeeded)
                 {
-                    // Buscamos por Usuario O por Correo para evitar el Error 500
-                    var user = await _userManager.FindByNameAsync(model.UserName)
-                               ?? await _userManager.FindByEmailAsync(model.UserName);
-
-                    if (user != null)
+                    var roles = await _userManager.GetRolesAsync(user);
+                    if (roles.Contains("Admin") || roles.Contains("Empleado"))
                     {
-                        var roles = await _userManager.GetRolesAsync(user);
-                        // Si es Admin o Empleado, se va a su panel
-                        if (roles.Contains("Admin") || roles.Contains("Empleado"))
-                        {
-                            return RedirectToAction("Index", "Admin");
-                        }
+                        return RedirectToAction("Index", "Admin");
                     }
-                    // Si es cliente, se va a la tienda
                     return RedirectToAction("Index", "Home");
                 }
-                ModelState.AddModelError(string.Empty, "Intento de inicio de sesión no válido.");
+
+                // ALERTA ESPECÍFICA: La contraseña está mal
+                ModelState.AddModelError(string.Empty, "Error: La contraseña es incorrecta.");
             }
             return View(model);
         }
@@ -57,7 +61,6 @@ namespace PIA_PD.Controllers
         {
             if (ModelState.IsValid)
             {
-                // CORRECCIÓN: Quitamos el "model.Email" porque tu modelo no lo pide. Se queda en blanco.
                 var user = new IdentityUser { UserName = model.UserName, Email = "" };
                 var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -67,9 +70,17 @@ namespace PIA_PD.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
+                // TRADUCCIÓN AL ESPAÑOL DE LOS ERRORES
                 foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    string msgError = error.Description;
+                    if (error.Code == "DuplicateUserName") msgError = $"El usuario '{model.UserName}' ya está registrado. Por favor, elige otro.";
+                    else if (error.Code == "PasswordTooShort") msgError = "Tu contraseña es muy corta. Debe tener al menos 6 caracteres.";
+                    else if (error.Code == "PasswordRequiresNonAlphanumeric") msgError = "La contraseña debe contener al menos un carácter especial (ej. @, #, !).";
+                    else if (error.Code == "PasswordRequiresDigit") msgError = "La contraseña debe contener al menos un número ('0'-'9').";
+                    else if (error.Code == "PasswordRequiresUpper") msgError = "La contraseña debe contener al menos una letra mayúscula ('A'-'Z').";
+
+                    ModelState.AddModelError(string.Empty, msgError);
                 }
             }
             return View(model);

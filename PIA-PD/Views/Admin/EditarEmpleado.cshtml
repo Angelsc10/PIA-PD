@@ -1,0 +1,38 @@
+﻿@model Microsoft.AspNetCore.Identity.IdentityUser
+@{
+    ViewData["Title"] = "Editar Empleado";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0 p-4">
+                <div class="text-center mb-4 border-bottom pb-3">
+                    <h3 class="fw-bold text-primary"><i class="bi bi-person-lines-fill me-2"></i>Modificar Expediente</h3>
+                </div>
+
+                <form asp-action="EditarEmpleado" method="post">
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <div class="form-floating mb-3">
+                        <input type="text" name="newUsername" class="form-control" value="@Model.UserName" required />
+                        <label>Nombre de Usuario</label>
+                    </div>
+
+                    <div class="form-floating mb-4">
+                        <input type="password" name="newPassword" class="form-control" placeholder="Dejar en blanco para no cambiar" />
+                        <label>Nueva Contraseña (Opcional)</label>
+                        <div class="form-text small text-muted">
+                            <i class="bi bi-info-circle me-1"></i>Si no deseas cambiar la contraseña del empleado, deja este campo vacío.
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a asp-action="Empleados" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

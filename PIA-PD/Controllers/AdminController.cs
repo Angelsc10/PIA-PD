@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PIA_PD.Data;
+using PIA_PD.Services; // IMPORTANTE: Para leer la API
 using ClosedXML.Excel;
 
 namespace PIA_PD.Controllers
@@ -12,23 +13,32 @@ namespace PIA_PD.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly LibroApiService _apiService; // NUEVO: Radar de la API
 
-        public AdminController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        // Inyectamos el servicio de la API en el constructor
+        public AdminController(ApplicationDbContext context, UserManager<IdentityUser> userManager, LibroApiService apiService)
         {
             _context = context;
             _userManager = userManager;
+            _apiService = apiService;
         }
 
-        // --- CAMBIO: El Index ahora calcula la Inteligencia de Negocios ---
         public async Task<IActionResult> Index()
         {
-            // 1. Buscamos los libros físicos que están a punto de agotarse (menos de 5 unidades)
-            var alertasStock = await _context.LibrosInternos
+            // 1. Buscamos stock crítico en los libros Físicos (Locales)
+            var alertasLocales = await _context.LibrosInternos
                 .Where(l => l.Stock < 5)
-                .OrderBy(l => l.Stock)
                 .ToListAsync();
 
-            // 2. Calculamos los 3 libros más vendidos sumando todo el historial de detalles
+            // 2. Buscamos stock crítico en los libros de la API
+            var librosApi = await _apiService.ObtenerLibrosDestacadosAsync();
+            var alertasApi = librosApi.Where(l => l.Stock < 5).ToList();
+
+            // 3. Unimos ambas listas para mostrarlas en el panel
+            var alertasStock = alertasLocales.Concat(alertasApi)
+                .OrderBy(l => l.Stock)
+                .ToList();
+
             var topVentas = await _context.DetallesVenta
                 .GroupBy(d => d.Titulo)
                 .Select(g => new TopVentaDto
@@ -40,7 +50,6 @@ namespace PIA_PD.Controllers
                 .Take(3)
                 .ToListAsync();
 
-            // Mandamos los resultados a la Vista
             ViewBag.AlertasStock = alertasStock;
             ViewBag.TopVentas = topVentas;
 
@@ -53,7 +62,6 @@ namespace PIA_PD.Controllers
                                 .Include(v => v.Detalles)
                                 .OrderByDescending(v => v.Fecha)
                                 .ToListAsync();
-
             return View(ventas);
         }
 
@@ -76,6 +84,7 @@ namespace PIA_PD.Controllers
             return Json(datosGrafica);
         }
 
+        // ================= GESTIÓN DE EMPLEADOS =================
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Empleados()
         {
@@ -91,8 +100,47 @@ namespace PIA_PD.Controllers
             {
                 var nuevoEmpleado = new IdentityUser { UserName = username, Email = "" };
                 var result = await _userManager.CreateAsync(nuevoEmpleado, password);
-                if (result.Succeeded) await _userManager.AddToRoleAsync(nuevoEmpleado, "Empleado");
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(nuevoEmpleado, "Empleado");
+                    TempData["Exito"] = "Empleado contratado exitosamente.";
+                }
                 else TempData["Error"] = "La contraseña debe tener 8 caracteres, mayúscula, número y símbolo.";
+            }
+            return RedirectToAction("Empleados");
+        }
+
+        // NUEVO: Pantalla para Editar Empleado
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> EditarEmpleado(string id)
+        {
+            var empleado = await _userManager.FindByIdAsync(id);
+            if (empleado == null) return NotFound();
+            return View(empleado);
+        }
+
+        // NUEVO: Procesar la edición del Empleado
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> EditarEmpleado(string id, string newUsername, string newPassword)
+        {
+            var empleado = await _userManager.FindByIdAsync(id);
+            if (empleado != null)
+            {
+                if (!string.IsNullOrWhiteSpace(newUsername))
+                    empleado.UserName = newUsername;
+
+                var updateResult = await _userManager.UpdateAsync(empleado);
+
+                // Si se escribió una nueva contraseña, la reseteamos
+                if (updateResult.Succeeded && !string.IsNullOrWhiteSpace(newPassword))
+                {
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(empleado);
+                    await _userManager.ResetPasswordAsync(empleado, token, newPassword);
+                }
+
+                TempData["Exito"] = "Datos del empleado actualizados.";
             }
             return RedirectToAction("Empleados");
         }
@@ -102,18 +150,19 @@ namespace PIA_PD.Controllers
         public async Task<IActionResult> BajaEmpleado(string id)
         {
             var empleado = await _userManager.FindByIdAsync(id);
-            if (empleado != null) await _userManager.DeleteAsync(empleado);
+            if (empleado != null)
+            {
+                await _userManager.DeleteAsync(empleado);
+                TempData["Exito"] = "Empleado dado de baja.";
+            }
             return RedirectToAction("Empleados");
         }
 
+        // ================= EXPORTACIÓN =================
         [HttpGet]
         public async Task<IActionResult> ExportarExcel()
         {
-            var ventas = await _context.Ventas
-                                .Include(v => v.Detalles)
-                                .OrderByDescending(v => v.Fecha)
-                                .ToListAsync();
-
+            var ventas = await _context.Ventas.Include(v => v.Detalles).OrderByDescending(v => v.Fecha).ToListAsync();
             using (var workbook = new XLWorkbook())
             {
                 var worksheet = workbook.Worksheets.Add("Reporte de Ventas");
@@ -142,7 +191,6 @@ namespace PIA_PD.Controllers
                 }
 
                 worksheet.Columns().AdjustToContents();
-
                 using (var stream = new MemoryStream())
                 {
                     workbook.SaveAs(stream);
@@ -153,7 +201,6 @@ namespace PIA_PD.Controllers
         }
     }
 
-    // Clase auxiliar (Data Transfer Object) para empaquetar el Top de Ventas
     public class TopVentaDto
     {
         public string Titulo { get; set; } = "";
