@@ -1,22 +1,421 @@
-html {
-  font-size: 14px;
+/* ============================================
+   EL RINCÓN DEL LIBRO - ESTILOS ELEGANTES
+   Colores azules y blancos | Diseño responsivo
+   ============================================ */
+
+/* ===== VARIABLES AZULES Y BLANCOS ===== */
+:root {
+    --azul-profundo: #0B2B40;
+    --azul-marino: #144A66;
+    --azul-elegante: #2A6F8F;
+    --azul-suave: #5D9BB5;
+    --azul-claro: #E6F2F5;
+    --blanco-puro: #FFFFFF;
+    --blanco-humo: #F8F9FA;
+    --gris-sutil: #EFF3F6;
+    --gris-elegante: #6C757D;
+    --oro-suave: #D4AF37;
+    --rojo-soft: #E74C3C;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+/* ===== ESTILOS BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-  margin-bottom: 60px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--blanco-humo) 0%, #F0F5FA 100%);
+    color: #1A2C3A;
+    letter-spacing: -0.2px;
+    line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6,
+.navbar-brand,
+.titulo-elegante,
+.card-title {
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    letter-spacing: -0.3px;
+    font-weight: 600;
+}
+
+/* ===== NAVBAR AZUL ELEGANTE ===== */
+.navbar {
+    background: linear-gradient(135deg, var(--azul-profundo) 0%, var(--azul-marino) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--shadow-lg);
+    padding: 0.75rem 0;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(120deg, #FFFFFF, #C5DEE8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
+    letter-spacing: -0.5px;
+}
+
+    .navbar-brand i {
+        background: linear-gradient(135deg, var(--oro-suave), #FFA500);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 1.6rem;
+    }
+
+.nav-link {
+    font-weight: 450;
+    font-size: 0.95rem;
+    transition: var(--transition);
+    border-radius: 40px;
+    padding: 0.5rem 1rem;
+}
+
+    .nav-link:not(.btn):hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-1px);
+    }
+
+/* ===== BOTONES ELEGANTES ===== */
+.btn {
+    border-radius: 40px;
+    font-weight: 500;
+    padding: 0.5rem 1.4rem;
+    transition: var(--transition);
+    font-size: 0.9rem;
+    letter-spacing: -0.2px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino));
+    border: none;
+    box-shadow: 0 2px 8px rgba(42, 111, 143, 0.3);
+}
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(42, 111, 143, 0.4);
+        background: linear-gradient(135deg, #3D8AAD, #1A5A7A);
+    }
+
+.btn-outline-light {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(4px);
+}
+
+    .btn-outline-light:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-1px);
+    }
+
+.btn-danger {
+    background: linear-gradient(135deg, #E74C3C, #C0392B);
+    border: none;
+}
+
+/* ===== OFFCANVAS REFINADOS ===== */
+.offcanvas-custom {
+    width: 450px !important;
+    border-radius: 28px 0 0 28px;
+    border: none;
+    box-shadow: -12px 0 32px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 576px) {
+    .offcanvas-custom {
+        width: 100% !important;
+        border-radius: 24px 24px 0 0;
+    }
+}
+
+.offcanvas-header {
+    background: linear-gradient(120deg, var(--azul-profundo), var(--azul-marino));
+    padding: 1.2rem 1.5rem;
+}
+
+    .offcanvas-header .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.75;
+        transition: opacity 0.2s;
+    }
+
+        .offcanvas-header .btn-close:hover {
+            opacity: 1;
+        }
+
+/* ===== CARDS Y CONTENEDORES ===== */
+.card {
+    border-radius: 20px !important;
+    border: none;
+    background: var(--blanco-puro);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+
+/* ===== IMAGEN DEL CARRITO ===== */
+.cart-img {
+    width: 65px;
+    height: 85px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s;
+}
+
+    .cart-img:hover {
+        transform: scale(1.02);
+    }
+
+/* ===== BURBUJA DEL CARRITO ===== */
+.cart-icon-container {
+    margin-top: 6px;
+}
+
+#cartBadge {
+    background: linear-gradient(135deg, #E74C3C, #C0392B);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.55rem;
+    border-radius: 40px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    top: -8px;
+    right: -10px;
+}
+
+/* ===== CHATBOT ELEGANTE ===== */
+#chatBox {
+    background: var(--blanco-humo);
+    border-radius: 20px !important;
+    border: 1px solid rgba(42, 111, 143, 0.12) !important;
+}
+
+    #chatBox > div {
+        border-radius: 20px !important;
+        font-size: 0.9rem;
+        line-height: 1.45;
+    }
+
+.bg-primary.text-white.rounded {
+    background: linear-gradient(120deg, var(--azul-elegante), var(--azul-marino)) !important;
+    box-shadow: 0 2px 8px rgba(42, 111, 143, 0.2);
+}
+
+.bg-light.text-end {
+    background: white !important;
+    border: 1px solid rgba(42, 111, 143, 0.2) !important;
+}
+
+.input-group {
+    border-radius: 60px;
+    overflow: hidden;
+    background: white;
+    border: 1px solid rgba(42, 111, 143, 0.2);
+    transition: var(--transition);
+}
+
+    .input-group:focus-within {
+        border-color: var(--azul-elegante);
+        box-shadow: 0 0 0 3px rgba(42, 111, 143, 0.1);
+    }
+
+    .input-group input {
+        border: none;
+        padding: 0.75rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+        .input-group input:focus {
+            box-shadow: none;
+        }
+
+    .input-group button {
+        border-radius: 0 60px 60px 0 !important;
+        padding: 0.5rem 1.4rem;
+    }
+
+/* ===== SCROLL ELEGANTE ===== */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gris-sutil);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--azul-elegante);
+    border-radius: 10px;
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--azul-suave);
+    }
+
+/* ===== ALERTS STOCK ===== */
+.alerts-stock-container {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+/* ===== DROPDOWN ELEGANTE ===== */
+.dropdown-menu {
+    border-radius: 20px;
+    border: none;
+    box-shadow: var(--shadow-lg);
+    padding: 0.5rem 0;
+    background: var(--blanco-puro);
+}
+
+.dropdown-item {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+    .dropdown-item:hover {
+        background: var(--azul-claro);
+        padding-left: 1.8rem;
+    }
+
+/* ===== BOTÓN FLOTANTE CHAT ===== */
+.btn-float-chat {
+    background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino));
+    box-shadow: 0 8px 20px rgba(42, 111, 143, 0.35);
+    transition: var(--transition);
+}
+
+    .btn-float-chat:hover {
+        transform: scale(1.06);
+        box-shadow: 0 12px 28px rgba(42, 111, 143, 0.45);
+    }
+
+/* ===== FORMULARIOS ===== */
+.form-control, .form-select {
+    border-radius: 48px;
+    border: 1px solid #DEE2E6;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--azul-elegante);
+        box-shadow: 0 0 0 3px rgba(42, 111, 143, 0.12);
+    }
+
+/* ===== TABLAS ===== */
+.table {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+    .table thead th {
+        background: var(--azul-claro);
+        color: var(--azul-profundo);
+        font-weight: 600;
+        border-bottom: none;
+    }
+
+/* ===== PAGINACIÓN ===== */
+.pagination .page-link {
+    border-radius: 40px;
+    margin: 0 3px;
+    color: var(--azul-elegante);
+    border: 1px solid #E0E7ED;
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino));
+    border-color: transparent;
+}
+
+/* ===== ICONOS ELEGANTES ===== */
+.bi {
+    transition: transform 0.2s;
+}
+
+a:hover .bi:not(.no-scale) {
+    transform: scale(1.08);
+}
+
+.bi-heart-fill {
+    color: var(--rojo-soft);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+        .navbar-brand i {
+            font-size: 1.3rem;
+        }
+
+    .btn {
+        padding: 0.4rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .card-title {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .offcanvas-custom {
+        width: 100% !important;
+    }
+
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+main {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+/* ===== FOOTER ===== */
+footer {
+    background: var(--blanco-puro);
+    border-top: 1px solid rgba(11, 43, 64, 0.08);
+    color: var(--gris-elegante);
+    font-size: 0.85rem;
+    padding: 1.5rem 0;
+    margin-top: auto;
 }

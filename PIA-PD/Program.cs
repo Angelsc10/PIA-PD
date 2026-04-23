@@ -11,21 +11,19 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// CONFIGURACIÓN ACTUALIZADA: Quitamos correos obligatorios
+// Configuración de Identity
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 8;
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequireUppercase = true;
-
-    // LA MAGIA: Permitimos usuarios sin correo y correos duplicados (vacíos)
-    options.User.RequireUniqueEmail = false;
+    options.User.RequireUniqueEmail = false; // Permitir usuarios sin correo único
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// Le decimos a la aplicación dónde están nuestras nuevas pantallas personalizadas
+// Cookies personalizadas
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -34,7 +32,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddHttpClient<LibroApiService>();
-
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -48,6 +45,7 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+// Sembrar roles y admin
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
