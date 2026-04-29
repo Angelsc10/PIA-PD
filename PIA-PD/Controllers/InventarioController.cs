@@ -147,5 +147,26 @@ namespace PIA_PD.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+        [HttpPost]
+        public async Task<IActionResult> Crear(Libro libro)
+        {
+            // Este check valida las etiquetas [Required] y [Range] del Modelo
+            if (ModelState.IsValid)
+            {
+                // Lógica para generar ID si es local
+                if (string.IsNullOrEmpty(libro.Id))
+                    libro.Id = Guid.NewGuid().ToString().Substring(0, 8);
+
+                _context.Add(libro);
+                await _context.SaveChangesAsync();
+                TempData["Exito"] = "Libro registrado correctamente.";
+                return RedirectToAction("Index");
+            }
+
+            // Si llegó aquí, es porque hubo un error (ej: pusieron un 0)
+            // Se devuelve a la vista para mostrar los mensajes de error
+            return View(libro);
+        }
     }
 }
+            

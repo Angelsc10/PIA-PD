@@ -8,18 +8,23 @@ namespace PIA_PD.Models
         [Key]
         public string Id { get; set; } = "";
 
+        [Required(ErrorMessage = "El título es obligatorio")]
         public string Titulo { get; set; } = "";
 
+        [Required(ErrorMessage = "El autor es obligatorio")]
         public string Autor { get; set; } = "";
 
         public string? PortadaUrl { get; set; }
 
+        [Required(ErrorMessage = "El precio es obligatorio")]
+        [Range(0.01, 999999.99, ErrorMessage = "El precio debe ser mayor a 0")]
         [Column(TypeName = "decimal(18,4)")]
         public decimal Precio { get; set; }
 
-        public int Stock { get; set; } = 0;
+        [Required(ErrorMessage = "La cantidad es obligatoria")]
+        [Range(1, int.MaxValue, ErrorMessage = "La cantidad inicial debe ser al menos 1")]
+        public int Stock { get; set; }
 
-        // NUEVO: Género literario del libro
         public string Categoria { get; set; } = "Ficción";
     }
 }
