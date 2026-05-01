@@ -128,7 +128,7 @@
                                 <button type="button" class="btn btn-outline-secondary w-50 rounded-pill fw-bold" onclick="goToStep(2)">
                                     <i class="bi bi-arrow-left me-2"></i>Regresar
                                 </button>
-                                <button type="submit" class="btn btn-success w-50 rounded-pill fw-bold shadow-lg py-2" style="font-size: 1.1rem;">
+                                <button type="button" onclick="procesarPagoFinal()" class="btn btn-success w-50 rounded-pill fw-bold shadow-lg py-2" style="font-size: 1.1rem;">
                                     PAGAR Y FINALIZAR <i class="bi bi-check2-circle ms-2"></i>
                                 </button>
                             </div>
@@ -154,20 +154,15 @@
 </style>
 
 <script>
-    // --- MAGIA: Formato automático de la fecha (MM/YY) ---
     document.getElementById('reqDate').addEventListener('input', function (e) {
-        let val = this.value.replace(/[^0-9]/g, ''); // Quita todo lo que no sea número
+        let val = this.value.replace(/[^0-9]/g, '');
         if (val.length >= 3) {
-            // Cuando llega a 3 números, le inserta la diagonal
             val = val.substring(0, 2) + '/' + val.substring(2, 4);
         }
         this.value = val;
     });
 
-    // --- VALIDACIONES ESTRICTAS PARA AVANZAR DE PASO ---
     function goToStep(s) {
-
-        // Antes de ir al paso 2, validar el paso 1
         if (s === 2) {
             const email = document.getElementById('Email').value.trim();
             const tel = document.getElementById('Telefono').value.trim();
@@ -182,7 +177,6 @@
             }
         }
 
-        // Antes de ir al paso 3, validar el paso 2
         if (s === 3) {
             const calle = document.getElementById('Calle').value.trim();
             const cp = document.getElementById('CP').value.trim();
@@ -199,7 +193,6 @@
             }
         }
 
-        // Ocultar todos y mostrar el correcto
         document.getElementById('step1').classList.add('d-none');
         document.getElementById('step2').classList.add('d-none');
         document.getElementById('step3').classList.add('d-none');
@@ -209,21 +202,40 @@
         document.getElementById('progreso').style.width = (s === 1 ? 33 : s === 2 ? 66 : 100) + '%';
     }
 
-    // Activar/Desactivar validación de tarjeta
     function togglePay(id) {
         document.getElementById('formTarjeta').classList.add('d-none');
-
-        document.getElementById('reqName').required = false;
-        document.getElementById('reqNum').required = false;
-        document.getElementById('reqDate').required = false;
-        document.getElementById('reqCvv').required = false;
-
         if(id) {
             document.getElementById(id).classList.remove('d-none');
-            document.getElementById('reqName').required = true;
-            document.getElementById('reqNum').required = true;
-            document.getElementById('reqDate').required = true;
-            document.getElementById('reqCvv').required = true;
         }
+    }
+
+    // --- FUNCIÓN MÁGICA PARA EVITAR EL BLOQUEO DEL NAVEGADOR ---
+    function procesarPagoFinal() {
+        const metodo = document.querySelector('input[name="Metodo"]:checked').value;
+
+        if (metodo === 'Tarjeta') {
+            const nombre = document.getElementById('reqName').value.trim();
+            const num = document.getElementById('reqNum').value.trim();
+            const fecha = document.getElementById('reqDate').value.trim();
+            const cvv = document.getElementById('reqCvv').value.trim();
+
+            if (!nombre || num.length < 16 || fecha.length < 5 || cvv.length < 3) {
+                Swal.fire('Falta Información', 'Por favor completa todos los datos de tu tarjeta.', 'warning');
+                return;
+            }
+        }
+
+        const form = document.getElementById('checkoutForm');
+        const inputs = form.querySelectorAll('input');
+        inputs.forEach(input => input.removeAttribute('required'));
+
+        Swal.fire({
+            title: 'Procesando tu compra...',
+            text: 'Por favor no cierres la ventana',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        form.submit();
     }
 </script>

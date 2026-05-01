@@ -1,22 +1,30 @@
-﻿using Microsoft.AspNetCore.Authorization; // <-- NUEVO: Librería de Seguridad
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PIA_PD.Models;
-using PIA_PD.Extensions;
-using PIA_PD.Data;
 using Microsoft.EntityFrameworkCore;
+using PIA_PD.Data;
+using PIA_PD.Extensions;
+using PIA_PD.Models;
+using PIA_PD.Services;
 
 namespace PIA_PD.Controllers
 {
     public class CarritoController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly LibroApiService _apiService;
 
-        public CarritoController(ApplicationDbContext context)
+        public CarritoController(ApplicationDbContext context, LibroApiService apiService)
         {
             _context = context;
+            _apiService = apiService;
         }
 
-        // --- 1. LÓGICA AJAX PARA EL NUEVO CARRITO LATERAL ---
+        public IActionResult Index()
+        {
+            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            return View(carrito);
+        }
+
         public IActionResult GetCarritoPartial()
         {
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
@@ -24,147 +32,159 @@ namespace PIA_PD.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AgregarAjax(string id, string titulo, decimal precio, string portadaUrl)
+        public async Task<IActionResult> Agregar(string id, int cantidad)
         {
-            var libroDb = await _context.LibrosInternos.FindAsync(id);
-            if (libroDb != null && libroDb.Stock <= 0)
-                return Json(new { success = false, message = "Libro agotado en bodega." });
+            int stockReal = await ObtenerStockDisponible(id);
+
+            // Si el stock real desde el inicio es 0, rebota la petición
+            if (stockReal <= 0) return Json(new { success = false, message = "Stock completamente agotado." });
 
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
-            var item = carrito.FirstOrDefault(i => i.LibroId == id);
+            var item = carrito.FirstOrDefault(x => x.LibroId == id);
+            int cantidadEnCarrito = item?.Cantidad ?? 0;
 
-            if (item != null) item.Cantidad++;
-            else carrito.Add(new CarritoItem { LibroId = id, Titulo = titulo, Precio = precio, PortadaUrl = portadaUrl, Cantidad = 1 });
-
-            HttpContext.Session.Set("MiCarrito", carrito);
-            return Json(new { success = true, count = carrito.Sum(i => i.Cantidad) });
-        }
-
-        [HttpPost]
-        public IActionResult ActualizarCantidad(string id, int cambio)
-        {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
-            var item = carrito.FirstOrDefault(i => i.LibroId == id);
-            if (item != null)
+            // Validación estricta sincronizada con el Admin
+            if ((cantidadEnCarrito + cantidad) > stockReal)
             {
-                item.Cantidad += cambio;
-                if (item.Cantidad <= 0) carrito.Remove(item);
-            }
-            HttpContext.Session.Set("MiCarrito", carrito);
-            return RedirectToAction("GetCarritoPartial");
-        }
-
-        // --- 2. EL CARRITO TRADICIONAL ---
-        public IActionResult Index()
-        {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
-            return View(carrito);
-        }
-
-        public IActionResult Eliminar(string id)
-        {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
-            var item = carrito.FirstOrDefault(i => i.LibroId == id);
-            if (item != null) carrito.Remove(item);
-            HttpContext.Session.Set("MiCarrito", carrito);
-            return RedirectToAction("Index");
-        }
-
-        // --- 3. LÓGICA DE CUPONES DE DESCUENTO ---
-        [HttpPost]
-        public async Task<IActionResult> AplicarCupon(string codigo)
-        {
-            if (string.IsNullOrWhiteSpace(codigo)) return RedirectToAction("Index");
-
-            var codigoUpper = codigo.ToUpper();
-            if (codigoUpper == "PROFE100" && !await _context.Cupones.AnyAsync(c => c.Codigo == "PROFE100"))
-            {
-                _context.Cupones.Add(new Cupon { Codigo = "PROFE100", PorcentajeDescuento = 15, Activo = true });
-                await _context.SaveChangesAsync();
+                return Json(new { success = false, message = $"Solo quedan {stockReal} unidades en almacén." });
             }
 
-            var cupon = await _context.Cupones.FirstOrDefaultAsync(c => c.Codigo == codigoUpper && c.Activo);
-            if (cupon != null)
+            if (item == null)
             {
-                HttpContext.Session.Set("MiCupon", cupon);
-                TempData["Exito"] = $"¡Cupón aplicado! {cupon.PorcentajeDescuento}% de descuento.";
+                var libroLocal = await _context.LibrosInternos.FindAsync(id);
+                string t = libroLocal?.Titulo ?? "Libro";
+                decimal p = libroLocal?.Precio ?? 0;
+                string img = libroLocal?.PortadaUrl ?? "";
+
+                if (id.StartsWith("OL-"))
+                {
+                    var librosApi = await _apiService.ObtenerLibrosDestacadosAsync();
+                    var la = librosApi.FirstOrDefault(l => l.Id == id);
+                    if (la != null) { t = la.Titulo; p = la.Precio; img = la.PortadaUrl; }
+                }
+                carrito.Add(new CarritoItem { LibroId = id, Titulo = t, Precio = p, PortadaUrl = img, Cantidad = cantidad });
             }
             else
             {
-                TempData["Error"] = "Cupón inválido.";
+                item.Cantidad += cantidad;
             }
-            return RedirectToAction("Index");
-        }
 
-        public IActionResult RemoverCupon()
-        {
-            HttpContext.Session.Remove("MiCupon");
-            return RedirectToAction("Index");
-        }
-
-        // --- 4. NUEVO CHECKOUT DE 3 PASOS BLINDADO ---
-
-        [HttpGet]
-        [Authorize] // <-- BLINDAJE: Solo usuarios logueados pueden entrar aquí
-        public IActionResult Checkout()
-        {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito");
-            if (carrito == null || !carrito.Any()) return RedirectToAction("Index", "Home");
-            return View();
+            HttpContext.Session.Set("MiCarrito", carrito);
+            return Json(new { success = true });
         }
 
         [HttpPost]
-        [Authorize] // <-- BLINDAJE: Solo usuarios logueados pueden procesar el pago
+        public async Task<IActionResult> ActualizarCantidad(string id, int cambio)
+        {
+            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var item = carrito.FirstOrDefault(x => x.LibroId == id);
+
+            if (item != null)
+            {
+                int stockReal = await ObtenerStockDisponible(id);
+
+                // Bloqueo estricto del botón '+' en el carrito lateral
+                if (cambio > 0 && (item.Cantidad + cambio) > stockReal)
+                {
+                    return Json(new { success = false, message = "Límite de stock alcanzado." });
+                }
+
+                item.Cantidad += cambio;
+                if (item.Cantidad <= 0) carrito.Remove(item);
+
+                HttpContext.Session.Set("MiCarrito", carrito);
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public IActionResult Eliminar(string id)
+        {
+            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var item = carrito.FirstOrDefault(x => x.LibroId == id);
+            if (item != null)
+            {
+                carrito.Remove(item);
+                HttpContext.Session.Set("MiCarrito", carrito);
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult Checkout()
+        {
+            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            if (!carrito.Any()) return RedirectToAction("Index", "Home");
+            return View();
+        }
+
+        [Authorize]
+        [HttpPost]
         public async Task<IActionResult> FinalizarCompra(string Email, string Telefono, string Calle, string CP, string Ciudad, string Estado, string Metodo)
         {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito");
-            if (carrito == null || !carrito.Any()) return RedirectToAction("Index", "Home");
+            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            if (!carrito.Any()) return RedirectToAction("Index", "Home");
 
-            decimal subtotal = carrito.Sum(i => i.Precio * i.Cantidad);
-            decimal totalVenta = subtotal;
-            decimal montoDescuento = 0;
-            string? cuponCodigo = null;
-
-            var cuponAplicado = HttpContext.Session.Get<Cupon>("MiCupon");
-            if (cuponAplicado != null)
-            {
-                montoDescuento = subtotal * (cuponAplicado.PorcentajeDescuento / 100m);
-                totalVenta = subtotal - montoDescuento;
-                cuponCodigo = cuponAplicado.Codigo;
-            }
-
-            var nuevaVenta = new Venta
-            {
-                Usuario = User.Identity.Name, // Ya sabemos que está logueado gracias al [Authorize]
-                Email = Email,
-                Fecha = DateTime.Now,
-                Total = totalVenta,
-                Descuento = montoDescuento,
-                CuponAplicado = cuponCodigo
-            };
+            var venta = new Venta { Usuario = User.Identity.Name, Email = Email, Fecha = DateTime.Now, Total = carrito.Sum(x => x.Precio * x.Cantidad), MetodoPago = Metodo ?? "Tarjeta" };
 
             foreach (var item in carrito)
             {
-                var libroDb = await _context.LibrosInternos.FindAsync(item.LibroId);
-                if (libroDb != null)
+                if (item.LibroId.StartsWith("OL-"))
                 {
-                    libroDb.Stock -= item.Cantidad;
-                    if (libroDb.Stock < 0) libroDb.Stock = 0;
+                    var libroApiEnDb = await _context.LibrosInternos.FindAsync(item.LibroId);
+                    if (libroApiEnDb == null)
+                    {
+                        int stockInicialApi = 10;
+                        _context.LibrosInternos.Add(new Libro
+                        {
+                            Id = item.LibroId,
+                            Titulo = item.Titulo,
+                            Stock = stockInicialApi - item.Cantidad,
+                            Precio = item.Precio,
+                            PortadaUrl = item.PortadaUrl,
+                            Autor = "API",
+                            Categoria = "API"
+                        });
+                    }
+                    else { libroApiEnDb.Stock -= item.Cantidad; }
                 }
-                nuevaVenta.Detalles.Add(new DetalleVenta { LibroId = item.LibroId, Titulo = item.Titulo, PrecioUnitario = item.Precio, Cantidad = item.Cantidad });
+                else
+                {
+                    var l = await _context.LibrosInternos.FindAsync(item.LibroId);
+                    if (l != null) l.Stock -= item.Cantidad;
+                }
+                venta.Detalles.Add(new DetalleVenta { LibroId = item.LibroId, Titulo = item.Titulo, Cantidad = item.Cantidad, PrecioUnitario = item.Precio });
             }
 
-            _context.Ventas.Add(nuevaVenta);
+            _context.Ventas.Add(venta);
             await _context.SaveChangesAsync();
-
-            // Limpiamos todo
             HttpContext.Session.Remove("MiCarrito");
-            HttpContext.Session.Remove("MiCupon");
+            return RedirectToAction("Confirmar", new { id = venta.Id });
+        }
 
-            // Mensaje de confirmación simulado
-            TempData["Exito"] = $"¡Compra Exitosa! Se ha enviado la confirmación al correo {Email} y un SMS al {Telefono}. Pagaste mediante: {Metodo}";
+        [Authorize]
+        public async Task<IActionResult> Confirmar(int id)
+        {
+            var venta = await _context.Ventas.Include(v => v.Detalles).FirstOrDefaultAsync(v => v.Id == id);
+            if (venta == null) return RedirectToAction("Index", "Home");
+            if (venta.Usuario != User.Identity.Name && venta.Usuario != "Cliente Anónimo") return RedirectToAction("Index", "Home");
+            return View(venta);
+        }
 
-            return RedirectToAction("VerTicketWeb", "Pedidos", new { id = nuevaVenta.Id });
+        private async Task<int> ObtenerStockDisponible(string id)
+        {
+            // 1. Siempre buscamos primero en la base de datos (La fuente de la verdad)
+            var libroEnDb = await _context.LibrosInternos.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+            if (libroEnDb != null) return libroEnDb.Stock;
+
+            // 2. Si es de la API y NO está en la base de datos, el stock SIEMPRE es 10
+            if (id.StartsWith("OL-"))
+            {
+                return 10;
+            }
+
+            return 0;
         }
     }
 }

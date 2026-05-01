@@ -17,6 +17,9 @@ namespace PIA_PD.Models
         [Column(TypeName = "decimal(18,4)")]
         public decimal Total { get; set; }
 
+        // --- EL CAMPO FALTANTE PARA QUE NO FALLE EL PAGO ---
+        public string MetodoPago { get; set; } = "No especificado";
+
         // --- NUEVOS CAMPOS PARA CUPONES ---
         public string? CuponAplicado { get; set; }
 

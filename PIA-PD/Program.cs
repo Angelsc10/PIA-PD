@@ -42,8 +42,14 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 10485760; // 10 MB
+});
 
 var app = builder.Build();
+
+app.UseStaticFiles();
 
 // Sembrar roles y admin
 using (var scope = app.Services.CreateScope())

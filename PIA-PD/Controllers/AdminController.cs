@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PIA_PD.Data;
-using PIA_PD.Services; // IMPORTANTE: Para leer la API
+using PIA_PD.Services;
 using ClosedXML.Excel;
 
 namespace PIA_PD.Controllers
@@ -13,9 +13,8 @@ namespace PIA_PD.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly LibroApiService _apiService; // NUEVO: Radar de la API
+        private readonly LibroApiService _apiService;
 
-        // Inyectamos el servicio de la API en el constructor
         public AdminController(ApplicationDbContext context, UserManager<IdentityUser> userManager, LibroApiService apiService)
         {
             _context = context;
@@ -25,17 +24,25 @@ namespace PIA_PD.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // 1. Buscamos stock crítico en los libros Físicos (Locales)
-            var alertasLocales = await _context.LibrosInternos
-                .Where(l => l.Stock < 5)
-                .ToListAsync();
-
-            // 2. Buscamos stock crítico en los libros de la API
+            var librosLocales = await _context.LibrosInternos.ToListAsync();
             var librosApi = await _apiService.ObtenerLibrosDestacadosAsync();
-            var alertasApi = librosApi.Where(l => l.Stock < 5).ToList();
 
-            // 3. Unimos ambas listas para mostrarlas en el panel
-            var alertasStock = alertasLocales.Concat(alertasApi)
+            // Sincronizamos la API para que las alertas sean precisas
+            foreach (var apiLibro in librosApi)
+            {
+                var coincidencia = librosLocales.FirstOrDefault(l => l.Id == apiLibro.Id);
+                apiLibro.Stock = coincidencia != null ? coincidencia.Stock : 10;
+            }
+
+            // Unimos ambas listas de forma limpia
+            var todosLosLibros = librosLocales
+                .Where(l => !l.Id.StartsWith("OL-"))
+                .Concat(librosApi)
+                .ToList();
+
+            // Buscamos cualquier libro que tenga menos de 5 en stock real
+            var alertasStock = todosLosLibros
+                .Where(l => l.Stock < 5)
                 .OrderBy(l => l.Stock)
                 .ToList();
 
@@ -110,7 +117,6 @@ namespace PIA_PD.Controllers
             return RedirectToAction("Empleados");
         }
 
-        // NUEVO: Pantalla para Editar Empleado
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> EditarEmpleado(string id)
@@ -120,7 +126,6 @@ namespace PIA_PD.Controllers
             return View(empleado);
         }
 
-        // NUEVO: Procesar la edición del Empleado
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> EditarEmpleado(string id, string newUsername, string newPassword)
@@ -133,7 +138,6 @@ namespace PIA_PD.Controllers
 
                 var updateResult = await _userManager.UpdateAsync(empleado);
 
-                // Si se escribió una nueva contraseña, la reseteamos
                 if (updateResult.Succeeded && !string.IsNullOrWhiteSpace(newPassword))
                 {
                     var token = await _userManager.GeneratePasswordResetTokenAsync(empleado);

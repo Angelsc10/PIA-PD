@@ -1,112 +1,131 @@
-﻿@model List<PIA_PD.Models.CarritoItem>
-@using PIA_PD.Extensions
+﻿@model PIA_PD.Models.Venta
 @{
-    ViewData["Title"] = "Mi Carrito";
-    decimal subtotal = Model?.Sum(i => i.Precio * i.Cantidad) ?? 0;
-    var cupon = Context.Session.Get<PIA_PD.Models.Cupon>("MiCupon");
-    decimal descuento = cupon != null ? subtotal * (cupon.PorcentajeDescuento / 100m) : 0;
-    decimal totalVenta = subtotal - descuento;
+    Layout = null; // Esto evita que el Layout intente cargar el CarritoItem y rompa la página
 }
 
-<div class="container mt-5 mb-5">
-    <h2 class="fw-bold mb-4 text-primary"><i class="bi bi-cart-check me-2"></i>Tu Carrito de Compras</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comprobante de Orden #@Model.Id</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: #e9ecef;
+            padding: 20px;
+            font-family: 'Segoe UI', sans-serif;
+        }
 
-    @if (Model == null || !Model.Any())
-    {
-        <div class="text-center py-5 bg-light rounded shadow-sm border">
-            <i class="bi bi-cart-x display-1 text-muted"></i>
-            <p class="fs-4 mt-3 fw-bold">Tu carrito está vacío.</p>
-            <p class="text-muted">Parece que aún no has encontrado el libro indicado.</p>
-            <a asp-controller="Home" asp-action="Index" class="btn btn-primary rounded-pill px-4 mt-2">Explorar Catálogo</a>
-        </div>
-    }
-    else
-    {
-        <div class="row g-4">
-            <div class="col-lg-8">
-                @foreach (var item in Model)
+        .ticket-box {
+            max-width: 450px;
+            margin: auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header-oxxo {
+            background: #e11f1c;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header-success {
+            background: #198754;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .barcode-section {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            padding: 20px;
+            margin: 20px;
+            text-align: center;
+        }
+        @("@") media print {
+            .no-print
+
+        {
+            display: none !important;
+        }
+
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ticket-box">
+        @if (Model.MetodoPago == "OXXO")
+        {
+            <div class="header-oxxo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/66/Oxxo_Logo.svg" width="120" class="mb-2">
+                <h4 class="fw-bold mb-0">ORDEN DE PAGO EN CAJA</h4>
+            </div>
+            <div class="p-4">
+                <p class="text-center text-muted small">Presenta esta ficha al cajero para completar tu pedido</p>
+                <div class="barcode-section">
+                    <h6 class="fw-bold text-dark">REFERENCIA DE PAGO</h6>
+                    <svg id="barcode"></svg>
+                    <div class="mt-2 fw-bold fs-5 text-primary">REF-@Model.Id.ToString("000000")</div>
+                </div>
+                <div class="text-start mt-3 small text-secondary">
+                    <p class="mb-1"><strong>1.</strong> Acude a tu tienda OXXO más cercana.</p>
+                    <p class="mb-1"><strong>2.</strong> Indica que realizarás un pago de <strong>OXXO Pay</strong>.</p>
+                    <p class="mb-0"><strong>3.</strong> El pago se notificará automáticamente a la librería.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="header-success">
+                <i class="bi bi-bag-check-fill display-4"></i>
+                <h4 class="fw-bold mt-2">¡GRACIAS POR TU COMPRA!</h4>
+                <p class="mb-0 small">Tu pedido ha sido procesado con éxito</p>
+            </div>
+            <div class="p-4">
+                <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                    <span>Folio:</span> <span class="fw-bold">#@Model.Id</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+                    <span>Método Utilizado:</span> <span class="fw-bold">@Model.MetodoPago</span>
+                </div>
+                <h6 class="fw-bold mb-2">Resumen de Libros:</h6>
+                @foreach (var d in Model.Detalles)
                 {
-                    <div class="card mb-3 shadow-sm border-0 transition-hover">
-                        <div class="row g-0 align-items-center p-2">
-                            <div class="col-md-2 text-center">
-                                <img src="@item.PortadaUrl" class="img-fluid rounded shadow-sm" style="max-height: 100px;">
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card-body py-2">
-                                    <h5 class="card-title fw-bold mb-1 text-dark">@item.Titulo</h5>
-                                    <p class="text-primary fw-bold mb-0 fs-5">$@item.Precio.ToString("0.00")</p>
-                                </div>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <span class="badge bg-light text-dark border p-2 fs-6">Cant: @item.Cantidad</span>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <form asp-action="Eliminar" method="post" class="form-eliminar d-inline">
-                                    <input type="hidden" name="id" value="@item.LibroId" />
-                                    <button type="submit" class="btn btn-outline-danger rounded-circle shadow-sm" title="Eliminar del carrito">
-                                        <i class="bi bi-trash3"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>@d.Cantidad x @d.Titulo</span>
+                        <span>$@((d.PrecioUnitario * d.Cantidad).ToString("0.00"))</span>
                     </div>
                 }
             </div>
+        }
 
-            <div class="col-lg-4">
-                <div class="card shadow border-0 bg-light sticky-top" style="top: 20px;">
-                    <div class="card-body p-4">
-                        <h4 class="fw-bold border-bottom pb-3 mb-4"><i class="bi bi-receipt me-2"></i>Resumen</h4>
-
-                        <div class="d-flex justify-content-between mb-3 text-muted">
-                            <span>Subtotal:</span>
-                            <span class="fw-bold">$@subtotal.ToString("0.00")</span>
-                        </div>
-
-                        @if (cupon != null)
-                        {
-                            <div class="d-flex justify-content-between mb-3 text-success">
-                                <span>
-                                    <i class="bi bi-tag-fill me-1"></i>Cupón (@cupon.Codigo):
-                                    <br>
-                                    <form asp-action="RemoverCupon" method="post" class="form-eliminar d-inline">
-                                        <button type="submit" class="btn btn-link text-danger p-0 m-0 text-decoration-none small">Quitar cupón</button>
-                                    </form>
-                                </span>
-                                <span class="fw-bold">-$@descuento.ToString("0.00") (-@cupon.PorcentajeDescuento%)</span>
-                            </div>
-                        }
-                        else
-                        {
-                            <form asp-action="AplicarCupon" method="post" class="mb-4">
-                                <div class="input-group shadow-sm rounded-pill overflow-hidden">
-                                    <input type="text" name="codigo" class="form-control border-0" placeholder="Código de descuento" required>
-                                    <button type="submit" class="btn btn-dark px-3 fw-bold border-0">Aplicar</button>
-                                </div>
-                                <div class="form-text small mt-2"><i class="bi bi-info-circle me-1"></i>Pista: Prueba con 'PROFE100'</div>
-                            </form>
-                        }
-
-                        <div class="d-flex justify-content-between fs-4 fw-bold mb-4 border-top pt-3">
-                            <span>Total:</span>
-                            <span class="text-primary">$@totalVenta.ToString("0.00")</span>
-                        </div>
-
-                        <a asp-action="Confirmar" class="btn btn-primary btn-lg w-100 rounded-pill mb-3 shadow">
-                            Continuar <i class="bi bi-arrow-right ms-2"></i>
-                        </a>
-                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary w-100 rounded-pill">Seguir comprando</a>
-                    </div>
-                </div>
+        <div class="p-4 border-top bg-light text-center">
+            <h2 class="fw-bold text-dark mb-0">Total: $@Model.Total.ToString("0.00") MXN</h2>
+            <div class="d-grid gap-2 mt-4 no-print">
+                <button onclick="window.print()" class="btn btn-dark rounded-pill py-2 fw-bold">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>Guardar como PDF / Imprimir
+                </button>
+                <a href="/" class="btn btn-link text-decoration-none text-secondary">Volver a la Librería</a>
             </div>
         </div>
-    }
-</div>
+    </div>
 
-<style>
-    .transition-hover:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
-        transition: all .3s ease;
-    }
-</style>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script>
+        JsBarcode("#barcode", "LIBRERIA-@Model.Id-OXXO", {
+            format: "CODE128",
+            width: 2,
+            height: 50,
+            displayValue: false,
+            lineColor: "#212529"
+        });
+    </script>
+</body>
+</html>

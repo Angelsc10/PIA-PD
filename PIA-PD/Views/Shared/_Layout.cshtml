@@ -6,90 +6,56 @@
 <html lang="es">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - El Rincón del Libro</title>
-
-    <!-- Tipografía elegante (Google Fonts) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap + Iconos -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
-
-    <!-- Estilos personalizados elegantes -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header>
         <nav class="navbar navbar-expand-sm navbar-dark mb-3 shadow sticky-top">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" asp-controller="@(User.IsInRole("Admin") || User.IsInRole("Empleado") ? "Admin" : "Home")" asp-action="Index">
-                    <i class="bi bi-book-half me-2"></i>El Rincón del Libro
-                </a>
-                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-label="Menú">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index"><i class="bi bi-book-half me-2"></i>El Rincón del Libro</a>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1 gap-1">
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <li class="nav-item"><a class="nav-link text-warning fw-semibold ms-2" asp-controller="Admin" asp-action="Index"><i class="bi bi-shield-lock-fill me-1"></i>MODO ADMINISTRADOR</a></li>
-                        }
-                        else if (User.IsInRole("Empleado"))
-                        {
-                            <li class="nav-item"><a class="nav-link text-info fw-semibold ms-2" asp-controller="Admin" asp-action="Index"><i class="bi bi-person-badge me-1"></i>MODO EMPLEADO</a></li>
-                        }
-                        else
-                        {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index"><i class="bi bi-grid-3x3-gap-fill me-1"></i>Catálogo</a></li>
-                        }
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Catálogo</a></li>
                     </ul>
-                    <ul class="navbar-nav align-items-center gap-1">
+                    <ul class="navbar-nav align-items-center gap-2">
                         @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
                         {
-                            @if (User.Identity.IsAuthenticated)
-                            {
-                                <li class="nav-item me-1">
-                                    <a class="nav-link" asp-controller="Deseos" asp-action="Index" title="Mis Favoritos">
-                                        <i class="bi bi-heart-fill fs-5 align-middle"></i>
-                                    </a>
-                                </li>
-                            }
-                            <li class="nav-item me-2 cart-icon-container">
+                            <!-- ========================================== -->
+                            <!-- NUEVO: ICONO DE LISTA DE DESEOS (CORAZÓN)  -->
+                            <!-- ========================================== -->
+                            <li class="nav-item me-1">
+                                <a class="nav-link text-white position-relative" asp-controller="Deseos" asp-action="Index" title="Mi Lista de Deseos">
+                                    <i class="bi bi-heart fs-4"></i>
+                                </a>
+                            </li>
+                            <!-- ========================================== -->
+
+                            <li class="nav-item cart-icon-container">
                                 <a class="nav-link text-white position-relative" href="javascript:void(0)" onclick="openCart()">
                                     <i class="bi bi-cart3 fs-4"></i>
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill" id="cartBadge">0</span>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cartBadge">0</span>
                                 </a>
                             </li>
                         }
-
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 rounded-pill px-3 py-1" href="#" id="userDrop" data-bs-toggle="dropdown" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);">
-                                    <i class="bi bi-person-circle"></i> @User.Identity.Name
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                                    @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
-                                    {
-                                        <li><a class="dropdown-item py-2" asp-controller="Pedidos" asp-action="Index"><i class="bi bi-receipt me-2"></i>Mis Pedidos</a></li>
-                                        <li><hr class="dropdown-divider my-1"></li>
-                                    }
-                                    <li>
-                                        <form asp-controller="Account" asp-action="Logout" method="post">
-                                            <button type="submit" class="dropdown-item fw-semibold text-danger">
-                                                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
-                                            </button>
-                                        </form>
-                                    </li>
+                                <a class="nav-link dropdown-toggle rounded-pill px-3 border" href="#" data-bs-toggle="dropdown">@User.Identity.Name</a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                    <li><form asp-controller="Account" asp-action="Logout" method="post"><button type="submit" class="dropdown-item text-danger">Cerrar Sesión</button></form></li>
                                 </ul>
                             </li>
                         }
                         else
                         {
-                            <li class="nav-item me-1"><a class="nav-link btn btn-outline-light px-4 rounded-pill" asp-controller="Account" asp-action="Login"><i class="bi bi-key me-1"></i>Iniciar Sesión</a></li>
-                            <li class="nav-item"><a class="nav-link btn btn-primary px-4 rounded-pill text-white fw-bold shadow-sm" asp-controller="Account" asp-action="Register"><i class="bi bi-person-plus me-1"></i>Crear Cuenta</a></li>
+                            <li class="nav-item"><a class="nav-link btn btn-outline-light rounded-pill px-3" asp-controller="Account" asp-action="Login">Iniciar Sesión</a></li>
+                            <li class="nav-item"><a class="nav-link btn btn-primary rounded-pill px-3" asp-controller="Account" asp-action="Register">Registrarse</a></li>
                         }
                     </ul>
                 </div>
@@ -98,156 +64,219 @@
     </header>
 
     <main role="main" class="pb-3 flex-grow-1">
-        <div class="container-fluid px-3 px-md-4 px-lg-5">
+        <div class="container-fluid">
             @RenderBody()
         </div>
     </main>
 
-    @{
-        var isCheckout = ViewContext.RouteData.Values["Action"]?.ToString() == "Checkout";
-    }
+    <!-- MENÚ LATERAL DEL CARRITO -->
+    <div class="offcanvas offcanvas-start shadow" tabindex="-1" id="cartSidebar" style="width: 400px;">
+        <div class="offcanvas-header bg-dark text-white">
+            <h5 class="offcanvas-title fw-bold">Mi Carrito</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body" id="cartBody"></div>
+    </div>
 
-    @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
-    {
-        @if (!isCheckout)
-        {
-            <button class="btn btn-primary rounded-circle shadow-lg position-fixed d-flex justify-content-center align-items-center btn-float-chat" type="button" onclick="openChat()" style="bottom: 30px; right: 30px; width: 65px; height: 65px; z-index: 1000; border: none;">
-                <i class="bi bi-robot fs-2"></i>
-            </button>
-
-            <div class="offcanvas offcanvas-end offcanvas-custom shadow" tabindex="-1" id="chatSidebar">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title fw-bold"><i class="bi bi-robot me-2"></i>Asistente Librero</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-                </div>
-                <div class="offcanvas-body d-flex flex-column bg-light">
-                    <div id="chatBox" class="flex-grow-1 overflow-auto p-3 mb-3 bg-white rounded border" style="max-height: 70vh;"></div>
-                    <div class="input-group shadow-sm">
-                        <input type="text" id="chatInput" class="form-control border-0 px-3" placeholder="¿Qué libro buscas?" onkeypress="handleEnter(event)" autocomplete="off">
-                        <button class="btn btn-primary" onclick="sendMsg()"><i class="bi bi-send"></i></button>
-                    </div>
-                </div>
-            </div>
-        }
-
-        <div class="offcanvas offcanvas-start offcanvas-custom shadow" tabindex="-1" id="cartSidebar">
-            <div class="offcanvas-header">
-                <h5 class="offcanvas-title fw-bold"><i class="bi bi-cart3 me-2"></i>Carrito de Compras</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-            </div>
-            <div class="offcanvas-body d-flex flex-column" id="cartBody">
+    <!-- INTERFAZ DEL BOT -->
+    <div id="botWindow" class="card shadow position-fixed border-0" style="bottom: 90px; right: 20px; width: 350px; z-index: 1050; display: none;">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center rounded-top">
+            <h6 class="mb-0"><i class="bi bi-robot me-2"></i>Asistente Virtual</h6>
+            <button type="button" class="btn-close btn-close-white" onclick="toggleBot()"></button>
+        </div>
+        <div class="card-body" id="botChatBody" style="height: 350px; overflow-y: auto; background-color: #f8f9fa;">
+            <div class="text-start mb-3">
+                <span class="badge bg-secondary text-wrap text-start p-2 fs-6 shadow-sm" style="font-weight: 500;">
+                    ¡Hola! Soy tu asistente de El Rincón del Libro 📚 ¿En qué te puedo ayudar hoy?
+                </span>
             </div>
         </div>
-    }
+        <div class="card-footer p-2 bg-white rounded-bottom border-top">
+            <div class="input-group">
+                <input type="text" id="botInput" class="form-control" placeholder="Escribe tu mensaje..." onkeypress="if(event.key === 'Enter') sendBotMessage()">
+                <button class="btn btn-primary" onclick="sendBotMessage()"><i class="bi bi-send"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <button id="botBtnToggle" class="btn btn-primary rounded-circle position-fixed shadow d-flex justify-content-center align-items-center" style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 1050; transition: transform 0.2s;" onclick="toggleBot()">
+        <i class="bi bi-chat-dots fs-3"></i>
+    </button>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // ============================================
-        // CARRITO Y CHATBOT - LÓGICA ORIGINAL
-        // ============================================
+        // --- 1. LÓGICA DEL CARRITO ---
         const cartOff = document.getElementById('cartSidebar') ? new bootstrap.Offcanvas('#cartSidebar') : null;
-        const chatOff = document.getElementById('chatSidebar') ? new bootstrap.Offcanvas('#chatSidebar') : null;
-
-        function openCart() { if(chatOff) chatOff.hide(); refreshCart(); if(cartOff) cartOff.show(); }
-        function openChat() { if(cartOff) cartOff.hide(); if(chatOff) chatOff.show(); }
+        function openCart() { refreshCart(); cartOff.show(); }
 
         function refreshCart() {
-            if(!document.getElementById('cartBody')) return;
             $.get('/Carrito/GetCarritoPartial', function(data) {
                 $('#cartBody').html(data);
                 $('#cartBadge').text($('#cartItemCount').val() || 0);
             });
         }
 
-        function addToCart(id, titulo, precio, url) {
-            $.post('/Carrito/AgregarAjax', { id, titulo, precio, portadaUrl: url }, function(res) {
-                if(res.success) {
+        function addToCart(id, titulo) {
+            let botonesAsociados = $('[onclick*="' + id + '"]');
+            botonesAsociados.css('pointer-events', 'none');
+
+            $.post('/Carrito/Agregar', { id: id, cantidad: 1 }, function (res) {
+                if (res.success) {
                     refreshCart();
                     Swal.fire({
-                        icon: 'success', title: '¡Agregado!', text: titulo + ' está en tu carrito.',
-                        toast: true, position: 'top-end', timer: 2500, showConfirmButton: false
+                        icon: 'success', title: '¡Añadido!', text: titulo + " se agregó al carrito.", toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
                     });
-                }
-                else { Swal.fire('Error', res.message, 'error'); }
-            });
-        }
-
-        function toggleWishlist(id, titulo, precio, url, btnElement) {
-            $.post('/Deseos/AlternarAjax', { id: id, titulo: titulo, precio: precio, portadaUrl: url }, function(res) {
-                if(res.success) {
-                    Swal.fire({
-                        icon: res.agregado ? 'success' : 'info',
-                        title: res.agregado ? '¡Favorito!' : 'Removido',
-                        text: res.message,
-                        toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
-                    });
-
-                    let icon = $(btnElement).find('i');
-                    if(res.agregado) {
-                        icon.removeClass('bi-heart').addClass('bi-heart-fill');
-                    } else {
-                        icon.removeClass('bi-heart-fill').addClass('bi-heart');
-                    }
-                }
-            });
-        }
-
-        // Alertas en Español
-        $(document).on('submit', '.form-eliminar', function(e) {
-            e.preventDefault();
-            Swal.fire({ title: '¿Estás seguro?', text: "Esta acción no se puede deshacer.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' })
-            .then((res) => { if(res.isConfirmed) this.submit(); });
-        });
-
-        // --- CHATBOT: MEMORIA Y COLORES ---
-        function loadChatHistory() {
-            const box = document.getElementById('chatBox');
-            if (box) {
-                const history = sessionStorage.getItem('chatHistory');
-                if (history) {
-                    box.innerHTML = history;
+                    botonesAsociados.css('pointer-events', 'auto');
                 } else {
-                    box.innerHTML = `<div class="p-2 mb-2 bg-primary text-white rounded w-75 shadow-sm">¡Hola! ¿En qué puedo ayudarte hoy?</div>`;
+                    Swal.fire({ icon: 'info', title: 'Sin Existencias', text: res.message, confirmButtonColor: '#28a745' });
+                    botonesAsociados.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle me-2"></i>Agotado');
                 }
-                box.scrollTop = box.scrollHeight;
+            });
+        }
+
+        function modQty(id, cambio) {
+            let btnTrigger = $(`[onclick*="modQty('${id}', ${cambio})"]`);
+            btnTrigger.css('pointer-events', 'none');
+
+            $.post('/Carrito/ActualizarCantidad', { id: id, cambio: cambio }, function(res) {
+                if (res.success) {
+                    refreshCart();
+                    if (cambio < 0) {
+                        $('[onclick*="' + id + '"]').prop('disabled', false).removeClass('disabled text-muted').css('pointer-events', 'auto');
+                    }
+                } else {
+                    Swal.fire({ icon: 'warning', title: 'Límite Alcanzado', text: 'Has llegado al máximo de unidades disponibles en el Admin.', confirmButtonColor: '#d33' });
+                    $(`[onclick*="modQty('${id}', 1)"]`).prop('disabled', true).addClass('disabled text-muted border-secondary');
+                }
+                if(cambio < 0) btnTrigger.css('pointer-events', 'auto');
+            });
+        }
+
+        function addFromDetails(id, titulo) {
+            const cant = document.getElementById('inputCantidadDetalle').value;
+            let btn = $('[onclick*="' + id + '"]');
+            btn.css('pointer-events', 'none');
+
+            $.post('/Carrito/Agregar', { id: id, cantidad: cant }, function(res) {
+                if(res.success) {
+                    refreshCart();
+                    Swal.fire({ icon: 'success', title: '¡Listo!', text: 'Añadido al carrito.', timer: 2000, showConfirmButton: false });
+                    btn.css('pointer-events', 'auto');
+                } else {
+                    Swal.fire({ icon: 'warning', title: 'Sin existencias', text: res.message });
+                    btn.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle me-2"></i>Agotado');
+                }
+            });
+        }
+
+        $(document).ready(refreshCart);
+
+        // --- 2. LÓGICA DE LISTA DE DESEOS (El corazón) ---
+        function toggleWishlist(id, titulo, precio, portadaUrl, btnElement) {
+            $.post('/Deseos/AlternarAjax', { id: id, titulo: titulo, precio: precio, portadaUrl: portadaUrl }, function(res) {
+                if (res.success) {
+                    // Animación y cambio visual del corazón
+                    let icon = $(btnElement).find('i');
+                    if (res.agregado) {
+                        icon.removeClass('bi-heart text-dark').addClass('bi-heart-fill text-danger');
+                    } else {
+                        icon.removeClass('bi-heart-fill text-danger').addClass('bi-heart text-dark');
+                    }
+
+                    // Alerta de éxito pequeña
+                    Swal.fire({
+                        icon: 'success',
+                        title: res.agregado ? '¡Agregado!' : 'Eliminado',
+                        text: res.message,
+                        toast: true,
+                        position: 'top-end',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            }).fail(function(xhr) {
+                // Si da error 401 es porque no tiene sesión iniciada
+                if (xhr.status === 401) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Inicia Sesión',
+                        text: 'Necesitas una cuenta para crear tu lista de deseos.',
+                        confirmButtonText: 'Ir a Iniciar Sesión',
+                        showCancelButton: true,
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '/Account/Login';
+                        }
+                    });
+                }
+            });
+        }
+
+        // --- 3. LÓGICA DEL BOT ---
+        function toggleBot() {
+            $('#botWindow').fadeToggle('fast');
+            let icon = $('#botBtnToggle i');
+            if (icon.hasClass('bi-chat-dots')) {
+                icon.removeClass('bi-chat-dots').addClass('bi-x-lg');
+                $('#botBtnToggle').css('transform', 'rotate(90deg)');
+            } else {
+                icon.removeClass('bi-x-lg').addClass('bi-chat-dots');
+                $('#botBtnToggle').css('transform', 'rotate(0deg)');
             }
         }
 
-        function handleEnter(e) { if(e.key === 'Enter') sendMsg(); }
-
-        async function sendMsg() {
-            const inp = document.getElementById('chatInput');
-            const box = document.getElementById('chatBox');
-            if(!inp || !inp.value.trim()) return;
-
-            box.innerHTML += `<div class="p-2 mb-2 bg-light text-end ms-auto w-75 rounded border shadow-sm">${inp.value}</div>`;
-            const txt = inp.value; inp.value = '';
-
-            sessionStorage.setItem('chatHistory', box.innerHTML);
-            box.scrollTop = box.scrollHeight;
-
-            try {
-                const res = await fetch(`/Chatbot/Preguntar?mensaje=${encodeURIComponent(txt)}`);
-                const data = await res.json();
-
-                let textoDecorado = data.respuesta.replace(/\$([0-9]+(\.[0-9]{1,2})?)/g, '<span class="badge bg-warning text-dark fs-6 ms-1">$$$1</span>');
-
-                box.innerHTML += `<div class="p-2 mb-2 bg-primary text-white rounded w-75 shadow-sm">${textoDecorado}</div>`;
-            } catch {
-                box.innerHTML += `<div class="p-2 mb-2 bg-danger text-white rounded w-75 shadow-sm">Error de conexión.</div>`;
-            }
-
-            sessionStorage.setItem('chatHistory', box.innerHTML);
-            box.scrollTop = box.scrollHeight;
+        function scrollBot() {
+            const body = document.getElementById('botChatBody');
+            body.scrollTop = body.scrollHeight;
         }
 
-        $(document).ready(function() {
-            refreshCart();
-            loadChatHistory();
-        });
+        function sendBotMessage() {
+            const input = $('#botInput');
+            const msg = input.val().trim();
+            if (!msg) return;
+
+            $('#botChatBody').append(`
+                <div class="text-end mb-3">
+                    <span class="badge bg-primary text-wrap text-start p-2 fs-6 shadow-sm" style="font-weight: 500;">${msg}</span>
+                </div>
+            `);
+            input.val('');
+            scrollBot();
+
+            const typingId = 'typing-' + Date.now();
+            $('#botChatBody').append(`
+                <div class="text-start mb-3" id="${typingId}">
+                    <span class="badge bg-secondary text-wrap text-start p-2 fs-6 shadow-sm"><i class="bi bi-three-dots"></i></span>
+                </div>
+            `);
+            scrollBot();
+
+            $.get('/Chatbot/Preguntar', { mensaje: msg }, function(res) {
+                $('#' + typingId).remove();
+                $('#botChatBody').append(`
+                    <div class="text-start mb-3">
+                        <span class="badge bg-secondary text-wrap text-start p-2 fs-6 shadow-sm" style="font-weight: 500;">
+                            ${res.respuesta}
+                        </span>
+                    </div>
+                `);
+                scrollBot();
+            }).fail(function() {
+                $('#' + typingId).remove();
+                $('#botChatBody').append(`
+                    <div class="text-start mb-3">
+                        <span class="badge bg-danger text-wrap text-start p-2 fs-6 shadow-sm">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Hubo un error al contactar al bot.
+                        </span>
+                    </div>
+                `);
+                scrollBot();
+            });
+        }
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

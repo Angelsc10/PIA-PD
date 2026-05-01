@@ -19,10 +19,8 @@ namespace PIA_PD.Controllers
             _apiService = apiService;
         }
 
-        // AGREGADO: Parámetro "pagina"
         public async Task<IActionResult> Index(string? q, string? categoria, int pagina = 1)
         {
-            // BLOQUEO AL ADMIN: Si un admin intenta entrar a la tienda, lo regresamos a trabajar
             if (User.IsInRole("Admin") || User.IsInRole("Empleado"))
             {
                 return RedirectToAction("Index", "Admin");
@@ -37,24 +35,40 @@ namespace PIA_PD.Controllers
 
             if (!string.IsNullOrWhiteSpace(q))
             {
-                librosLocales = await _context.LibrosInternos.Where(l => l.Titulo.Contains(q) || l.Autor.Contains(q)).ToListAsync();
+                librosLocales = await _context.LibrosInternos.AsNoTracking().Where(l => l.Titulo.Contains(q) || l.Autor.Contains(q)).ToListAsync();
                 librosApi = await _apiService.BuscarLibrosAsync(q);
             }
             else if (!string.IsNullOrWhiteSpace(categoria))
             {
-                librosLocales = await _context.LibrosInternos.Where(l => l.Categoria == categoria).ToListAsync();
+                librosLocales = await _context.LibrosInternos.AsNoTracking().Where(l => l.Categoria == categoria).ToListAsync();
                 librosApi = await _apiService.ObtenerLibrosPorCategoriaAsync(categoria);
             }
             else
             {
-                librosLocales = await _context.LibrosInternos.ToListAsync();
+                librosLocales = await _context.LibrosInternos.AsNoTracking().ToListAsync();
                 librosApi = await _apiService.ObtenerLibrosDestacadosAsync();
             }
 
-            // UNIMOS AMBAS LISTAS Y FILTRAMOS LOS QUE TIENEN STOCK > 0
-            var todosLosLibros = librosLocales.Concat(librosApi).Where(l => l.Stock > 0).ToList();
+            // --- SINCRONIZACIÓN Y STOCK FIJO DE 10 ---
+            foreach (var apiLibro in librosApi)
+            {
+                var coincidenciaEnDb = librosLocales.FirstOrDefault(l => l.Id == apiLibro.Id);
+                if (coincidenciaEnDb != null)
+                {
+                    apiLibro.Stock = coincidenciaEnDb.Stock; // Si ya lo vendimos alguna vez, usa nuestro stock real
+                }
+                else
+                {
+                    apiLibro.Stock = 10; // Si es completamente nuevo, SIEMPRE son 10
+                }
+            }
 
-            // MATEMÁTICA DE LA PAGINACIÓN
+            var todosLosLibros = librosLocales
+                .Where(l => !l.Id.StartsWith("OL-"))
+                .Concat(librosApi)
+                .Where(l => l.Stock > 0)
+                .ToList();
+
             int tamanoPagina = 12;
             int totalLibros = todosLosLibros.Count;
             var librosPaginados = todosLosLibros.Skip((pagina - 1) * tamanoPagina).Take(tamanoPagina).ToList();
@@ -70,13 +84,27 @@ namespace PIA_PD.Controllers
             if (string.IsNullOrEmpty(id)) return RedirectToAction("Index");
 
             Libro libro = null;
+            var libroLocal = await _context.LibrosInternos.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+
             if (id.StartsWith("OL-"))
             {
                 libro = await _apiService.ObtenerLibroPorIdAsync(id);
+                if (libro != null)
+                {
+                    // Forzamos el stock a 10 o al stock de la base de datos
+                    if (libroLocal != null)
+                    {
+                        libro.Stock = libroLocal.Stock;
+                    }
+                    else
+                    {
+                        libro.Stock = 10;
+                    }
+                }
             }
             else
             {
-                libro = await _context.LibrosInternos.FirstOrDefaultAsync(l => l.Id == id);
+                libro = libroLocal;
             }
 
             if (libro == null) return NotFound();
@@ -111,6 +139,7 @@ namespace PIA_PD.Controllers
         }
 
         public IActionResult Privacy() => View();
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error() => View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }

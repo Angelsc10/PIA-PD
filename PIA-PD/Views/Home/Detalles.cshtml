@@ -1,119 +1,182 @@
 ﻿@model PIA_PD.Models.Libro
+
 @{
-    ViewData["Title"] = Model.Titulo;
-    var resenas = ViewBag.Resenas as List<PIA_PD.Models.Resena>;
-    double promedio = ViewBag.Promedio;
+    ViewData["Title"] = "Detalles del Libro";
+    var resenas = ViewBag.Resenas as List<PIA_PD.Models.Resena> ?? new List<PIA_PD.Models.Resena>();
+    var promedio = ViewBag.Promedio ?? 0.0;
 }
 
 <div class="container mt-5 mb-5">
-    <div class="row mb-5 bg-white p-4 rounded shadow-sm border">
-        <div class="col-md-4 text-center">
-            <img src="@Model.PortadaUrl" alt="@Model.Titulo" class="img-fluid rounded shadow" style="max-height: 450px;">
-
-            <div class="mt-4">
-                <h3 class="text-primary fw-bold">$@Model.Precio.ToString("0.00") MXN</h3>
-                @if (Model.Stock > 0 || Model.Id.StartsWith("OL"))
-                {
-                    <button type="button"
-                            onclick="addToCart('@Model.Id', '@Model.Titulo', @Model.Precio.ToString().Replace(",", "."), '@Model.PortadaUrl')"
-                            class="btn btn-primary btn-lg rounded-pill w-100 shadow mt-3">
-                        <i class="bi bi-cart-plus me-2"></i>Añadir al Carrito
-                    </button>
-                }
-                else
-                {
-                    <button class="btn btn-secondary btn-lg disabled rounded-pill w-100 mt-3">Agotado</button>
-                }
+    <div class="row">
+        <!-- Columna de la Portada -->
+        <div class="col-md-4 mb-4 text-center">
+            <div class="card shadow border-0 overflow-hidden" style="border-radius: 15px;">
+                <img src="@Model.PortadaUrl" class="img-fluid" alt="@Model.Titulo"
+                     onerror="this.src='https://via.placeholder.com/300x400?text=Sin+Portada'"
+                     style="width: 100%; height: auto; object-fit: cover;">
             </div>
         </div>
 
-        <div class="col-md-8 px-md-5 mt-4 mt-md-0">
-            <h1 class="fw-bold">@Model.Titulo</h1>
-            <h4 class="text-muted border-bottom pb-3">Por @Model.Autor</h4>
+        <!-- Columna de Información -->
+        <div class="col-md-8">
+            <h1 class="display-4 fw-bold text-dark">@Model.Titulo</h1>
+            <h4 class="text-muted mb-3">Por @Model.Autor</h4>
 
-            <div class="d-flex align-items-center mt-3 mb-4">
-                <div class="text-warning fs-3 me-2">
+            <div class="d-flex align-items-center mb-4">
+                <div class="text-warning me-2">
                     @for (int i = 1; i <= 5; i++)
                     {
-                        if (i <= Math.Round(promedio))
-                        {
-                            <i class="bi bi-star-fill"></i>
-                        }
-                        else
-                        {
-                            <i class="bi bi-star"></i>
-                        }
+                        <i class="bi @(i <= Math.Round(promedio) ? "bi-star-fill" : "bi-star")"></i>
                     }
                 </div>
-                <span class="fs-4 fw-bold me-2">@promedio.ToString("0.0")</span>
-                <span class="text-muted">(Basado en @resenas.Count reseñas)</span>
+                <span class="fw-bold">@promedio / 5</span>
+                <span class="ms-2 text-muted">(@resenas.Count opiniones)</span>
             </div>
 
-            <p class="lead">Disfruta de esta increíble obra literaria. Añádela a tu carrito y recíbela o descárgala inmediatamente tras tu compra segura.</p>
+            <hr />
+            <p class="fs-5"><strong>Categoría:</strong> <span class="badge bg-info text-dark">@Model.Categoria</span></p>
+            <h2 class="text-primary fw-bold my-4">$@Model.Precio.ToString("0.00") MXN</h2>
 
-            <div class="mt-5 p-4 bg-light rounded border">
-                <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2"></i>Escribe tu reseña</h5>
-                @if (User.Identity.IsAuthenticated)
-                {
-                    <form asp-action="AgregarResena" method="post">
-                        <input type="hidden" name="libroId" value="@Model.Id" />
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Calificación:</label>
-                            <select name="calificacion" class="form-select w-auto d-inline-block ms-2" required>
-                                <option value="5">⭐⭐⭐⭐⭐ Excelente</option>
-                                <option value="4">⭐⭐⭐⭐ Muy bueno</option>
-                                <option value="3">⭐⭐⭐ Regular</option>
-                                <option value="2">⭐⭐ Malo</option>
-                                <option value="1">⭐ Pésimo</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <textarea name="comentario" class="form-control" rows="3" placeholder="¿Qué te pareció este libro?..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-success rounded-pill px-4">Publicar Reseña</button>
-                    </form>
-                }
-                else
-                {
-                    <div class="alert alert-secondary">
-                        <i class="bi bi-info-circle me-2"></i>Debes <a asp-controller="Account" asp-action="Login" class="fw-bold">iniciar sesión</a> para dejar un comentario.
-                    </div>
-                }
-            </div>
-
-            <h5 class="fw-bold mt-5 mb-4">Opiniones de los lectores</h5>
-            @if (!resenas.Any())
+            @if (Model.Stock > 0)
             {
-                <p class="text-muted italic">Aún no hay reseñas. ¡Sé el primero en opinar!</p>
+                <div class="card bg-light border-0 p-4 rounded-3 shadow-sm">
+                    <p class="text-success fw-bold mb-3"><i class="bi bi-check-circle-fill me-2"></i>Disponible: @Model.Stock unidades</p>
+
+                    @* Cambio: Ahora usa la función AJAX global igual que en el Home *@
+                    <div class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <label class="fw-bold">Cantidad:</label>
+                        </div>
+                        <div class="col-auto">
+                            <input type="number" id="inputCantidadDetalle" value="1" min="1" max="@Model.Stock" class="form-control" style="width: 80px;" />
+                        </div>
+                        <div class="col-auto">
+                            <button type="button"
+                                    onclick="addFromDetails('@Model.Id', '@Html.Raw(Model.Titulo.Replace("'", "\\'"))')"
+                                    class="btn btn-success btn-lg px-4 rounded-pill shadow-sm">
+                                <i class="bi bi-cart-plus me-2"></i>Añadir al Carrito
+                            </button>
+                        </div>
+                    </div>
+                </div>
             }
             else
             {
-                <div class="list-group">
-                    @foreach (var resena in resenas)
+                <div class="alert alert-danger rounded-3 fw-bold shadow-sm">
+                    <i class="bi bi-x-circle-fill me-2"></i>Temporalmente agotado
+                </div>
+            }
+
+            <a asp-action="Index" class="btn btn-outline-secondary mt-4 rounded-pill px-4">
+                <i class="bi bi-arrow-left me-2"></i>Volver al Catálogo
+            </a>
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE RESEÑAS -->
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h3 class="fw-bold border-bottom pb-3 mb-4"><i class="bi bi-chat-left-text me-2"></i>Reseñas de Lectores</h3>
+
+            <div class="row">
+                <div class="col-md-5 mb-4">
+                    <div class="card shadow-sm border-0 p-4 bg-white">
+                        <h5 class="fw-bold mb-3">Deja tu opinión</h5>
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <form asp-action="AgregarResena" method="post">
+                                <input type="hidden" name="libroId" value="@Model.Id" />
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Calificación:</label>
+                                    <select name="calificacion" class="form-select" required>
+                                        <option value="5">⭐⭐⭐⭐⭐ Excelente</option>
+                                        <option value="4">⭐⭐⭐⭐ Muy bueno</option>
+                                        <option value="3">⭐⭐⭐ Regular</option>
+                                        <option value="2">⭐⭐ Malo</option>
+                                        <option value="1">⭐ Pésimo</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Tu comentario:</label>
+                                    <textarea name="comentario" class="form-control" rows="3" placeholder="¿Qué te pareció este libro?" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 rounded-pill shadow-sm">Publicar mi reseña</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="text-center py-3">
+                                <p class="text-muted">Debes iniciar sesión para compartir tu opinión y comprar.</p>
+                                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary btn-sm rounded-pill px-4">Iniciar Sesión</a>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-7">
+                    @if (!resenas.Any())
                     {
-                        <div class="list-group-item list-group-item-action p-3 border-0 shadow-sm mb-2 rounded">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1 fw-bold"><i class="bi bi-person-circle me-2 text-primary"></i>@resena.Usuario</h6>
-                                <small class="text-muted">@resena.Fecha.ToString("dd/MM/yyyy")</small>
-                            </div>
-                            <div class="text-warning small mb-2">
-                                @for (int i = 1; i <= 5; i++)
-                                {
-                                    if (i <= resena.Calificacion)
-                                    {
-                                        <i class="bi bi-star-fill"></i>
-                                    }
-                                    else
-                                    {
-                                        <i class="bi bi-star"></i>
-                                    }
-                                }
-                            </div>
-                            <p class="mb-1">"@resena.Comentario"</p>
+                        <div class="text-center py-5 bg-light rounded border border-dashed">
+                            <i class="bi bi-chat-square-dots display-4 text-muted"></i>
+                            <p class="mt-3 text-muted">Aún no hay reseñas. ¡Sé el primero en comentar!</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group shadow-sm">
+                            @foreach (var resena in resenas)
+                            {
+                                <div class="list-group-item border-0 border-bottom p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="fw-bold mb-0 text-primary">@resena.Usuario</h6>
+                                        <small class="text-muted">@resena.Fecha.ToString("dd/MM/yyyy")</small>
+                                    </div>
+                                    <div class="text-warning mb-2 small">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <i class="bi @(i <= resena.Calificacion ? "bi-star-fill" : "bi-star")"></i>
+                                        }
+                                    </div>
+                                    <p class="mb-0 text-dark small">@resena.Comentario</p>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
-            }
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Función específica para enviar desde detalles con la cantidad seleccionada
+        function addFromDetails(id, titulo) {
+            const cant = document.getElementById('inputCantidadDetalle').value;
+            // Llamamos a la lógica AJAX que ya configuramos en el Layout
+            $.post('/Carrito/Agregar', { id: id, cantidad: cant }, function(res) {
+                if(res.success) {
+                    refreshCart(); // Actualiza el contador del badge
+                    Swal.fire({
+                        icon: res.alertaStock ? 'info' : 'success',
+                        title: res.alertaStock ? '¡Límite alcanzado!' : '¡Agregado!',
+                        text: res.message || (titulo + ' se añadió al carrito.'),
+                        toast: true,
+                        position: 'top-end',
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire('Stock insuficiente', res.message, 'error');
+                }
+            });
+        }
+
+        document.getElementById('inputCantidadDetalle').addEventListener('input', function (e) {
+            let maxStock = parseInt(this.max);
+            let valorActual = parseInt(this.value);
+            if (valorActual > maxStock) this.value = maxStock;
+            if (valorActual < 1) this.value = 1;
+        });
+    </script>
+}
