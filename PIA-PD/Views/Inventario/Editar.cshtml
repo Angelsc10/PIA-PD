@@ -81,3 +81,21 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.getElementById('Precio').addEventListener('input', function (e) {
+            let valor = e.target.value;
+            if (valor.includes('.')) {
+                let partes = valor.split('.');
+                if (partes[1].length > 2) {
+                    e.target.value = partes[0] + '.' + partes[1].substring(0, 2);
+                }
+            }
+        });
+    </script>
+}
