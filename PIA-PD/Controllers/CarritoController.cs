@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using PIA_PD.Data;
 using PIA_PD.Extensions;
 using PIA_PD.Models;
@@ -28,22 +29,53 @@ namespace PIA_PD.Controllers
         public IActionResult GetCarritoPartial()
         {
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+
+            // Le pasamos a la vista si hay un cupón activo en la sesión
+            ViewBag.CuponAplicado = HttpContext.Session.GetString("CuponAplicado");
+            ViewBag.DescuentoPorcentaje = HttpContext.Session.GetInt32("DescuentoPorcentaje") ?? 0;
+
             return PartialView("_CarritoPartial", carrito);
         }
+
+        // ==========================================
+        // NUEVO: SISTEMA DE CUPONES POR AJAX
+        // ==========================================
+        [HttpPost]
+        public async Task<IActionResult> AplicarCupon(string codigo)
+        {
+            if (string.IsNullOrWhiteSpace(codigo))
+                return Json(new { success = false, message = "Escribe un código válido." });
+
+            var cupon = await _context.Cupones.FirstOrDefaultAsync(c => c.Codigo == codigo && c.Activo);
+            if (cupon == null)
+                return Json(new { success = false, message = "El cupón no existe o ha expirado." });
+
+            // Lo guardamos en la sesión para que "viaje" con el usuario
+            HttpContext.Session.SetString("CuponAplicado", cupon.Codigo);
+            HttpContext.Session.SetInt32("DescuentoPorcentaje", cupon.PorcentajeDescuento);
+
+            return Json(new { success = true, message = $"¡Cupón del {cupon.PorcentajeDescuento}% aplicado correctamente!" });
+        }
+
+        [HttpPost]
+        public IActionResult QuitarCupon()
+        {
+            HttpContext.Session.Remove("CuponAplicado");
+            HttpContext.Session.Remove("DescuentoPorcentaje");
+            return Json(new { success = true });
+        }
+        // ==========================================
 
         [HttpPost]
         public async Task<IActionResult> Agregar(string id, int cantidad)
         {
             int stockReal = await ObtenerStockDisponible(id);
-
-            // Si el stock real desde el inicio es 0, rebota la petición
             if (stockReal <= 0) return Json(new { success = false, message = "Stock completamente agotado." });
 
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
             var item = carrito.FirstOrDefault(x => x.LibroId == id);
             int cantidadEnCarrito = item?.Cantidad ?? 0;
 
-            // Validación estricta sincronizada con el Admin
             if ((cantidadEnCarrito + cantidad) > stockReal)
             {
                 return Json(new { success = false, message = $"Solo quedan {stockReal} unidades en almacén." });
@@ -64,10 +96,7 @@ namespace PIA_PD.Controllers
                 }
                 carrito.Add(new CarritoItem { LibroId = id, Titulo = t, Precio = p, PortadaUrl = img, Cantidad = cantidad });
             }
-            else
-            {
-                item.Cantidad += cantidad;
-            }
+            else { item.Cantidad += cantidad; }
 
             HttpContext.Session.Set("MiCarrito", carrito);
             return Json(new { success = true });
@@ -82,8 +111,6 @@ namespace PIA_PD.Controllers
             if (item != null)
             {
                 int stockReal = await ObtenerStockDisponible(id);
-
-                // Bloqueo estricto del botón '+' en el carrito lateral
                 if (cambio > 0 && (item.Cantidad + cambio) > stockReal)
                 {
                     return Json(new { success = false, message = "Límite de stock alcanzado." });
@@ -91,7 +118,6 @@ namespace PIA_PD.Controllers
 
                 item.Cantidad += cambio;
                 if (item.Cantidad <= 0) carrito.Remove(item);
-
                 HttpContext.Session.Set("MiCarrito", carrito);
             }
             return Json(new { success = true });
@@ -126,7 +152,24 @@ namespace PIA_PD.Controllers
             var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
             if (!carrito.Any()) return RedirectToAction("Index", "Home");
 
-            var venta = new Venta { Usuario = User.Identity.Name, Email = Email, Fecha = DateTime.Now, Total = carrito.Sum(x => x.Precio * x.Cantidad), MetodoPago = Metodo ?? "Tarjeta" };
+            // --- LECTURA DEL CUPÓN Y CÁLCULOS FINALES ---
+            decimal subtotal = carrito.Sum(x => x.Precio * x.Cantidad);
+            string cuponApp = HttpContext.Session.GetString("CuponAplicado");
+            int descPorc = HttpContext.Session.GetInt32("DescuentoPorcentaje") ?? 0;
+
+            decimal descuentoFinal = (subtotal * descPorc) / 100m;
+            decimal totalFinal = subtotal - descuentoFinal;
+
+            var venta = new Venta
+            {
+                Usuario = User.Identity.Name,
+                Email = Email,
+                Fecha = DateTime.Now,
+                Total = totalFinal, // Se guarda el total ya con descuento
+                MetodoPago = Metodo ?? "Tarjeta",
+                CuponAplicado = cuponApp,     // Rellenamos tu tabla
+                Descuento = descuentoFinal    // Rellenamos tu tabla[cite: 1]
+            };
 
             foreach (var item in carrito)
             {
@@ -135,12 +178,11 @@ namespace PIA_PD.Controllers
                     var libroApiEnDb = await _context.LibrosInternos.FindAsync(item.LibroId);
                     if (libroApiEnDb == null)
                     {
-                        int stockInicialApi = 10;
                         _context.LibrosInternos.Add(new Libro
                         {
                             Id = item.LibroId,
                             Titulo = item.Titulo,
-                            Stock = stockInicialApi - item.Cantidad,
+                            Stock = 10 - item.Cantidad,
                             Precio = item.Precio,
                             PortadaUrl = item.PortadaUrl,
                             Autor = "API",
@@ -159,7 +201,12 @@ namespace PIA_PD.Controllers
 
             _context.Ventas.Add(venta);
             await _context.SaveChangesAsync();
+
+            // Limpiamos todo al terminar la compra
             HttpContext.Session.Remove("MiCarrito");
+            HttpContext.Session.Remove("CuponAplicado");
+            HttpContext.Session.Remove("DescuentoPorcentaje");
+
             return RedirectToAction("Confirmar", new { id = venta.Id });
         }
 
@@ -174,16 +221,9 @@ namespace PIA_PD.Controllers
 
         private async Task<int> ObtenerStockDisponible(string id)
         {
-            // 1. Siempre buscamos primero en la base de datos (La fuente de la verdad)
             var libroEnDb = await _context.LibrosInternos.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
             if (libroEnDb != null) return libroEnDb.Stock;
-
-            // 2. Si es de la API y NO está en la base de datos, el stock SIEMPRE es 10
-            if (id.StartsWith("OL-"))
-            {
-                return 10;
-            }
-
+            if (id.StartsWith("OL-")) return 10;
             return 0;
         }
     }

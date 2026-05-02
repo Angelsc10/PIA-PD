@@ -1,12 +1,19 @@
 ﻿@model List<PIA_PD.Models.CarritoItem>
 @{
-    decimal total = Model?.Sum(i => i.Precio * i.Cantidad) ?? 0;
+    decimal subtotal = Model?.Sum(i => i.Precio * i.Cantidad) ?? 0;
+
+    // Leemos si hay un cupón guardado en la memoria temporal (ViewBag viene del Controlador)
+    string cupon = ViewBag.CuponAplicado as string;
+    int porcentaje = ViewBag.DescuentoPorcentaje != null ? (int)ViewBag.DescuentoPorcentaje : 0;
+
+    // Calculamos la matemática
+    decimal descuento = (subtotal * porcentaje) / 100m;
+    decimal total = subtotal - descuento;
 }
 
 <input type="hidden" id="cartItemCount" value="@(Model?.Sum(i => i.Cantidad) ?? 0)" />
 
 <div class="d-flex flex-column h-100">
-    <!-- Lista de libros con scroll independiente -->
     <div class="flex-grow-1 overflow-auto pe-2" style="min-height: 0;">
         @if (Model == null || !Model.Any())
         {
@@ -35,9 +42,44 @@
         }
     </div>
 
-    <!-- Sección de botones anclada al fondo -->
     <div class="border-top pt-3 mt-3 bg-light p-3 shadow-lg" style="margin: 0 -1rem -1rem -1rem;">
-        <div class="d-flex justify-content-between fs-5 fw-bold mb-3 px-2">
+
+        <!-- ============================================== -->
+        <!-- ZONA MÁGICA DEL CUPÓN -->
+        @if (Model != null && Model.Any())
+        {
+            <div class="mb-3">
+                @if (string.IsNullOrEmpty(cupon))
+                {
+                    <div class="input-group input-group-sm mb-2 shadow-sm">
+                        <span class="input-group-text bg-white text-primary"><i class="bi bi-ticket-perforated"></i></span>
+                        <input type="text" id="inputCupon" class="form-control border-start-0" placeholder="Código de descuento" onkeypress="if(event.key === 'Enter') aplicarCupon()">
+                        <button class="btn btn-primary fw-bold px-3" onclick="aplicarCupon()">Aplicar</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-success p-2 mb-2 d-flex justify-content-between align-items-center small shadow-sm border-success">
+                        <span><i class="bi bi-check-circle-fill me-1"></i> Cupón <strong>@cupon</strong> (-@porcentaje%)</span>
+                        <button class="btn btn-sm btn-danger py-0 px-2 rounded-circle shadow-sm" onclick="quitarCupon()" title="Quitar cupón"><i class="bi bi-x fs-6"></i></button>
+                    </div>
+                }
+            </div>
+        }
+        <!-- ============================================== -->
+        <!-- DESGLOSE DE TOTALES -->
+        <div class="d-flex justify-content-between text-muted small px-2 mb-1">
+            <span>Subtotal:</span>
+            <span>$@subtotal.ToString("0.00")</span>
+        </div>
+        @if (descuento > 0)
+        {
+            <div class="d-flex justify-content-between text-success small px-2 mb-1 fw-bold">
+                <span>Descuento (-@porcentaje%):</span>
+                <span>-$@descuento.ToString("0.00")</span>
+            </div>
+        }
+        <div class="d-flex justify-content-between fs-5 fw-bold mb-3 px-2 mt-2 border-top pt-2">
             <span>Total a pagar:</span>
             <span class="text-primary">$@total.ToString("0.00")</span>
         </div>

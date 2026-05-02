@@ -26,16 +26,11 @@
                     <ul class="navbar-nav align-items-center gap-2">
                         @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
                         {
-                            <!-- ========================================== -->
-                            <!-- NUEVO: ICONO DE LISTA DE DESEOS (CORAZÓN)  -->
-                            <!-- ========================================== -->
                             <li class="nav-item me-1">
                                 <a class="nav-link text-white position-relative" asp-controller="Deseos" asp-action="Index" title="Mi Lista de Deseos">
                                     <i class="bi bi-heart fs-4"></i>
                                 </a>
                             </li>
-                            <!-- ========================================== -->
-
                             <li class="nav-item cart-icon-container">
                                 <a class="nav-link text-white position-relative" href="javascript:void(0)" onclick="openCart()">
                                     <i class="bi bi-cart3 fs-4"></i>
@@ -108,7 +103,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // --- 1. LÓGICA DEL CARRITO ---
+        // --- 1. LÓGICA DEL CARRITO Y CUPONES ---
         const cartOff = document.getElementById('cartSidebar') ? new bootstrap.Offcanvas('#cartSidebar') : null;
         function openCart() { refreshCart(); cartOff.show(); }
 
@@ -116,6 +111,26 @@
             $.get('/Carrito/GetCarritoPartial', function(data) {
                 $('#cartBody').html(data);
                 $('#cartBadge').text($('#cartItemCount').val() || 0);
+            });
+        }
+
+        function aplicarCupon() {
+            let cod = $('#inputCupon').val().trim();
+            if(!cod) return;
+
+            $.post('/Carrito/AplicarCupon', { codigo: cod }, function(res) {
+                if(res.success) {
+                    refreshCart();
+                    Swal.fire({ icon: 'success', title: '¡Éxito!', text: res.message, toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Cupón inválido', text: res.message, confirmButtonColor: '#0d6efd' });
+                }
+            });
+        }
+
+        function quitarCupon() {
+            $.post('/Carrito/QuitarCupon', function() {
+                refreshCart();
             });
         }
 
@@ -178,7 +193,6 @@
         function toggleWishlist(id, titulo, precio, portadaUrl, btnElement) {
             $.post('/Deseos/AlternarAjax', { id: id, titulo: titulo, precio: precio, portadaUrl: portadaUrl }, function(res) {
                 if (res.success) {
-                    // Animación y cambio visual del corazón
                     let icon = $(btnElement).find('i');
                     if (res.agregado) {
                         icon.removeClass('bi-heart text-dark').addClass('bi-heart-fill text-danger');
@@ -186,19 +200,14 @@
                         icon.removeClass('bi-heart-fill text-danger').addClass('bi-heart text-dark');
                     }
 
-                    // Alerta de éxito pequeña
                     Swal.fire({
                         icon: 'success',
                         title: res.agregado ? '¡Agregado!' : 'Eliminado',
                         text: res.message,
-                        toast: true,
-                        position: 'top-end',
-                        timer: 2000,
-                        showConfirmButton: false
+                        toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
                     });
                 }
             }).fail(function(xhr) {
-                // Si da error 401 es porque no tiene sesión iniciada
                 if (xhr.status === 401) {
                     Swal.fire({
                         icon: 'warning',
