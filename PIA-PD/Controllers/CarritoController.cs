@@ -20,19 +20,67 @@ namespace PIA_PD.Controllers
             _apiService = apiService;
         }
 
+        // --- Helper: build session keys per-authenticated-user or per-anónimo ---
+        private string SessionKey(string baseKey)
+        {
+            if (User?.Identity?.IsAuthenticated == true)
+            {
+                // Normalizar nombre de usuario para evitar colisiones con mayúsculas/minúsculas
+                var name = User.Identity.Name?.Trim().ToLowerInvariant() ?? "user";
+                return $"{name}:{baseKey}";
+            }
+
+            // Un carrito anónimo por sesión de navegador
+            return $"anon:{baseKey}";
+        }
+
+        private List<CarritoItem> GetCartFromSession()
+        {
+            return HttpContext.Session.Get<List<CarritoItem>>(SessionKey("MiCarrito")) ?? new List<CarritoItem>();
+        }
+
+        private void SaveCartToSession(List<CarritoItem> carrito)
+        {
+            HttpContext.Session.Set(SessionKey("MiCarrito"), carrito);
+        }
+
+        private string GetCuponAplicado()
+        {
+            return HttpContext.Session.GetString(SessionKey("CuponAplicado"));
+        }
+
+        private void SetCuponAplicado(string codigo, int porcentaje)
+        {
+            if (codigo == null)
+            {
+                HttpContext.Session.Remove(SessionKey("CuponAplicado"));
+                HttpContext.Session.Remove(SessionKey("DescuentoPorcentaje"));
+            }
+            else
+            {
+                HttpContext.Session.SetString(SessionKey("CuponAplicado"), codigo);
+                HttpContext.Session.SetInt32(SessionKey("DescuentoPorcentaje"), porcentaje);
+            }
+        }
+
+        private int GetDescuentoPorcentaje()
+        {
+            return HttpContext.Session.GetInt32(SessionKey("DescuentoPorcentaje")) ?? 0;
+        }
+
         public IActionResult Index()
         {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var carrito = GetCartFromSession();
             return View(carrito);
         }
 
         public IActionResult GetCarritoPartial()
         {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var carrito = GetCartFromSession();
 
-            // Le pasamos a la vista si hay un cupón activo en la sesión
-            ViewBag.CuponAplicado = HttpContext.Session.GetString("CuponAplicado");
-            ViewBag.DescuentoPorcentaje = HttpContext.Session.GetInt32("DescuentoPorcentaje") ?? 0;
+            // Le pasamos a la vista si hay un cupón activo en la sesión (ahora por usuario/anon)
+            ViewBag.CuponAplicado = GetCuponAplicado();
+            ViewBag.DescuentoPorcentaje = GetDescuentoPorcentaje();
 
             return PartialView("_CarritoPartial", carrito);
         }
@@ -50,9 +98,8 @@ namespace PIA_PD.Controllers
             if (cupon == null)
                 return Json(new { success = false, message = "El cupón no existe o ha expirado." });
 
-            // Lo guardamos en la sesión para que "viaje" con el usuario
-            HttpContext.Session.SetString("CuponAplicado", cupon.Codigo);
-            HttpContext.Session.SetInt32("DescuentoPorcentaje", cupon.PorcentajeDescuento);
+            // Guardamos el cupón en la sesión asociada al usuario actual (o sesión anónima)
+            SetCuponAplicado(cupon.Codigo, cupon.PorcentajeDescuento);
 
             return Json(new { success = true, message = $"¡Cupón del {cupon.PorcentajeDescuento}% aplicado correctamente!" });
         }
@@ -60,8 +107,7 @@ namespace PIA_PD.Controllers
         [HttpPost]
         public IActionResult QuitarCupon()
         {
-            HttpContext.Session.Remove("CuponAplicado");
-            HttpContext.Session.Remove("DescuentoPorcentaje");
+            SetCuponAplicado(null, 0);
             return Json(new { success = true });
         }
         // ==========================================
@@ -72,7 +118,7 @@ namespace PIA_PD.Controllers
             int stockReal = await ObtenerStockDisponible(id);
             if (stockReal <= 0) return Json(new { success = false, message = "Stock completamente agotado." });
 
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var carrito = GetCartFromSession();
             var item = carrito.FirstOrDefault(x => x.LibroId == id);
             int cantidadEnCarrito = item?.Cantidad ?? 0;
 
@@ -98,14 +144,14 @@ namespace PIA_PD.Controllers
             }
             else { item.Cantidad += cantidad; }
 
-            HttpContext.Session.Set("MiCarrito", carrito);
+            SaveCartToSession(carrito);
             return Json(new { success = true });
         }
 
         [HttpPost]
         public async Task<IActionResult> ActualizarCantidad(string id, int cambio)
         {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var carrito = GetCartFromSession();
             var item = carrito.FirstOrDefault(x => x.LibroId == id);
 
             if (item != null)
@@ -118,7 +164,7 @@ namespace PIA_PD.Controllers
 
                 item.Cantidad += cambio;
                 if (item.Cantidad <= 0) carrito.Remove(item);
-                HttpContext.Session.Set("MiCarrito", carrito);
+                SaveCartToSession(carrito);
             }
             return Json(new { success = true });
         }
@@ -126,12 +172,12 @@ namespace PIA_PD.Controllers
         [HttpPost]
         public IActionResult Eliminar(string id)
         {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var carrito = GetCartFromSession();
             var item = carrito.FirstOrDefault(x => x.LibroId == id);
             if (item != null)
             {
                 carrito.Remove(item);
-                HttpContext.Session.Set("MiCarrito", carrito);
+                SaveCartToSession(carrito);
             }
             return RedirectToAction(nameof(Index));
         }
@@ -140,7 +186,7 @@ namespace PIA_PD.Controllers
         [HttpGet]
         public IActionResult Checkout()
         {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var carrito = GetCartFromSession();
             if (!carrito.Any()) return RedirectToAction("Index", "Home");
             return View();
         }
@@ -149,13 +195,13 @@ namespace PIA_PD.Controllers
         [HttpPost]
         public async Task<IActionResult> FinalizarCompra(string Email, string Telefono, string Calle, string CP, string Ciudad, string Estado, string Metodo)
         {
-            var carrito = HttpContext.Session.Get<List<CarritoItem>>("MiCarrito") ?? new List<CarritoItem>();
+            var carrito = GetCartFromSession();
             if (!carrito.Any()) return RedirectToAction("Index", "Home");
 
             // --- LECTURA DEL CUPÓN Y CÁLCULOS FINALES ---
             decimal subtotal = carrito.Sum(x => x.Precio * x.Cantidad);
-            string cuponApp = HttpContext.Session.GetString("CuponAplicado");
-            int descPorc = HttpContext.Session.GetInt32("DescuentoPorcentaje") ?? 0;
+            string cuponApp = GetCuponAplicado();
+            int descPorc = GetDescuentoPorcentaje();
 
             decimal descuentoFinal = (subtotal * descPorc) / 100m;
             decimal totalFinal = subtotal - descuentoFinal;
@@ -202,10 +248,10 @@ namespace PIA_PD.Controllers
             _context.Ventas.Add(venta);
             await _context.SaveChangesAsync();
 
-            // Limpiamos todo al terminar la compra
-            HttpContext.Session.Remove("MiCarrito");
-            HttpContext.Session.Remove("CuponAplicado");
-            HttpContext.Session.Remove("DescuentoPorcentaje");
+            // Limpiamos la sesión (solo las claves relacionadas al carrito/ cupón del usuario actual)
+            HttpContext.Session.Remove(SessionKey("MiCarrito"));
+            HttpContext.Session.Remove(SessionKey("CuponAplicado"));
+            HttpContext.Session.Remove(SessionKey("DescuentoPorcentaje"));
 
             return RedirectToAction("Confirmar", new { id = venta.Id });
         }
