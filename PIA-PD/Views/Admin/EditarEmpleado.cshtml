@@ -1,38 +1,79 @@
 ﻿@model Microsoft.AspNetCore.Identity.IdentityUser
+
 @{
     ViewData["Title"] = "Editar Empleado";
 }
 
-<div class="container mt-5 mb-5">
+<div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow border-0 p-4">
-                <div class="text-center mb-4 border-bottom pb-3">
-                    <h3 class="fw-bold text-primary"><i class="bi bi-person-lines-fill me-2"></i>Modificar Expediente</h3>
+        <div class="col-lg-6 col-md-8">
+
+            <div class="card border-0 shadow-lg">
+
+                <div class="card-header border-0 text-white py-4"
+                     style="background: linear-gradient(135deg, var(--azul-profundo), var(--azul-marino));">
+
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-person-gear fs-2 me-3 text-warning"></i>
+
+                        <h2 class="mb-0 fw-bold">
+                            Editar Empleado
+                        </h2>
+                    </div>
+
                 </div>
 
-                <form asp-action="EditarEmpleado" method="post">
-                    <input type="hidden" name="id" value="@Model.Id" />
+                <div class="card-body p-4 p-md-5">
 
-                    <div class="form-floating mb-3">
-                        <input type="text" name="newUsername" class="form-control" value="@Model.UserName" required />
-                        <label>Nombre de Usuario</label>
-                    </div>
+                    <form asp-action="EditarEmpleado" method="post">
 
-                    <div class="form-floating mb-4">
-                        <input type="password" name="newPassword" class="form-control" placeholder="Dejar en blanco para no cambiar" />
-                        <label>Nueva Contraseña (Opcional)</label>
-                        <div class="form-text small text-muted">
-                            <i class="bi bi-info-circle me-1"></i>Si no deseas cambiar la contraseña del empleado, deja este campo vacío.
+                        <input type="hidden" name="id" value="@Model.Id" />
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-person-fill me-2 text-primary"></i>
+                                Nombre de Usuario
+                            </label>
+
+                            <input type="text"
+                                   name="newUsername"
+                                   value="@Model.UserName"
+                                   class="form-control shadow-sm" />
                         </div>
-                    </div>
 
-                    <div class="d-flex justify-content-between mt-4">
-                        <a asp-action="Empleados" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Guardar Cambios</button>
-                    </div>
-                </form>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-lock-fill me-2 text-primary"></i>
+                                Nueva Contraseña
+                            </label>
+
+                            <input type="password"
+                                   name="newPassword"
+                                   class="form-control shadow-sm" />
+                        </div>
+
+                        <div class="d-flex flex-column flex-md-row gap-3 pt-2">
+
+                            <button type="submit"
+                                    class="btn btn-primary flex-fill py-2">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                Guardar Cambios
+                            </button>
+
+                            <a asp-action="Empleados"
+                               class="btn btn-outline-secondary flex-fill py-2 rounded-pill">
+                                <i class="bi bi-arrow-left-circle me-2"></i>
+                                Volver
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
             </div>
+
         </div>
     </div>
 </div>
