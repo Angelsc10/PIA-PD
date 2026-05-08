@@ -6,51 +6,121 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-5">
-            <div class="card shadow border-0 p-4">
+
+            <div class="card shadow-lg border-0 p-4 p-md-5">
+
                 <div class="text-center mb-4">
-                    <i class="bi bi-person-plus-fill display-1 text-success"></i>
-                    <h2 class="fw-bold">Únete a nosotros</h2>
-                    <p class="text-muted">Crea tu perfil en segundos</p>
+
+                    <i class="bi bi-journal-bookmark-fill display-1"
+                       style="color: var(--azul-elegante);">
+                    </i>
+
+                    <h2 class="fw-bold titulo-elegante"
+                        style="color: var(--azul-profundo);">
+                        Únete a nosotros
+                    </h2>
+
+                    <p style="color: var(--gris-elegante);">
+                        Crea tu perfil en segundos
+                    </p>
+
                 </div>
 
                 <form id="formRegister" asp-action="Register" method="post">
 
-                    <!-- Contenedor clásico para errores en rojo -->
-                    <div id="registerErrors" class="text-danger mb-3" style="display: none;">
+                    <!-- Contenedor clásico para errores -->
+                    <div id="registerErrors"
+                         class="alert border-0 rounded-4 mb-3"
+                         style="display:none;
+                                background: rgba(231,76,60,.08);
+                                color:#C0392B;">
+
                         <ul class="mb-0 fw-bold small text-start"></ul>
+
                     </div>
 
                     <div class="form-floating mb-3">
-                        <input asp-for="UserName" class="form-control" placeholder="Usuario" />
-                        <label asp-for="UserName">Crea un Nombre de Usuario</label>
-                        <span asp-validation-for="UserName" class="text-danger small"></span>
+
+                        <input asp-for="UserName"
+                               class="form-control"
+                               placeholder="Usuario" />
+
+                        <label asp-for="UserName">
+                            Crea un Nombre de Usuario
+                        </label>
+
+                        <span asp-validation-for="UserName"
+                              class="text-danger small">
+                        </span>
+
                     </div>
 
                     <div class="form-floating mb-4">
-                        <input asp-for="Password" class="form-control" placeholder="Contraseña" />
-                        <label asp-for="Password">Contraseña Segura</label>
-                        <span asp-validation-for="Password" class="text-danger small"></span>
-                        <div class="form-text mt-2 small">Debe incluir 8 caracteres, mayúsculas y un símbolo.</div>
+
+                        <input asp-for="Password"
+                               class="form-control"
+                               placeholder="Contraseña" />
+
+                        <label asp-for="Password">
+                            Contraseña Segura
+                        </label>
+
+                        <span asp-validation-for="Password"
+                              class="text-danger small">
+                        </span>
+
+                        <div class="form-text mt-2 small"
+                             style="color: var(--gris-elegante);">
+
+                            Debe incluir 8 caracteres, mayúsculas y un símbolo.
+
+                        </div>
+
                     </div>
 
-                    <button type="submit" id="btnRegisterSubmit" class="btn btn-success btn-lg w-100 rounded-pill shadow-sm">
+                    <button type="submit"
+                            id="btnRegisterSubmit"
+                            class="btn btn-primary btn-lg w-100 shadow-sm">
+
+                        <i class="bi bi-person-plus-fill me-2"></i>
                         Registrarme ahora
+
                     </button>
+
                 </form>
 
                 <div class="text-center mt-4 border-top pt-3">
-                    <p class="text-muted small">¿Ya eres miembro? <a asp-action="Login" class="text-decoration-none fw-bold">Inicia sesión aquí</a></p>
+
+                    <p class="text-muted small">
+
+                        ¿Ya eres miembro?
+
+                        <a asp-action="Login"
+                           class="text-decoration-none fw-semibold"
+                           style="color: var(--azul-elegante);">
+
+                            Inicia sesión aquí
+
+                        </a>
+
+                    </p>
+
                 </div>
+
             </div>
+
         </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
     <script>
         $(document).ready(function () {
+
             $('#formRegister').on('submit', function (e) {
+
                 e.preventDefault();
 
                 $('#registerErrors').hide();
@@ -59,23 +129,36 @@
 
                 let btn = $('#btnRegisterSubmit');
                 let btnOriginalHtml = btn.html();
-                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Creando cuenta...');
+
+                btn.prop('disabled', true)
+                    .html('<span class="spinner-border spinner-border-sm me-2"></span>Creando cuenta...');
 
                 $.post($(this).attr('action'), $(this).serialize(), function (res) {
+
                     if (res.success) {
+
                         window.location.href = res.redirectUrl;
+
                     } else {
-                        // Inyectar errores en rojo
+
                         let errorHtml = '';
-                        res.errors.forEach(function(err) {
+
+                        res.errors.forEach(function (err) {
                             errorHtml += `<li>${err}</li>`;
                         });
+
                         $('#registerErrors ul').html(errorHtml);
+
                         $('#registerErrors').fadeIn();
-                        btn.prop('disabled', false).html(btnOriginalHtml);
+
+                        btn.prop('disabled', false)
+                            .html(btnOriginalHtml);
                     }
+
                 });
+
             });
+
         });
     </script>
 }
