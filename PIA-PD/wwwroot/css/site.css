@@ -419,3 +419,28 @@ footer {
     padding: 1.5rem 0;
     margin-top: auto;
 }
+
+/* Colores de iconos personalizados */
+.icon-oro {
+    color: var(--oro-suave) !important;
+}
+
+.icon-azul {
+    color: var(--azul-elegante) !important;
+}
+
+.icon-gris {
+    color: var(--gris-elegante) !important;
+}
+
+/* Ajuste para el botón volver */
+.btn-volver {
+    color: var(--gris-elegante);
+    border: 1px solid rgba(108, 117, 125, 0.3);
+    background: transparent;
+}
+
+    .btn-volver:hover {
+        background: var(--gris-sutil);
+        color: var(--azul-profundo);
+    }

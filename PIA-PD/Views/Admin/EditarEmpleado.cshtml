@@ -7,73 +7,57 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-6 col-md-8">
-
             <div class="card border-0 shadow-lg">
 
+                <!-- Encabezado con degradado azul profundo -->
                 <div class="card-header border-0 text-white py-4"
                      style="background: linear-gradient(135deg, var(--azul-profundo), var(--azul-marino));">
-
                     <div class="d-flex align-items-center">
-                        <i class="bi bi-person-gear fs-2 me-3 text-warning"></i>
-
-                        <h2 class="mb-0 fw-bold">
-                            Editar Empleado
-                        </h2>
+                        <!-- Icono en Oro Suave -->
+                        <i class="bi bi-person-gear fs-2 me-3 icon-oro"></i>
+                        <h2 class="mb-0 fw-bold">Editar Empleado</h2>
                     </div>
-
                 </div>
 
                 <div class="card-body p-4 p-md-5">
-
                     <form asp-action="EditarEmpleado" method="post">
-
                         <input type="hidden" name="id" value="@Model.Id" />
 
+                        <!-- Campo Usuario -->
                         <div class="mb-4">
                             <label class="form-label fw-semibold">
-                                <i class="bi bi-person-fill me-2 text-primary"></i>
+                                <i class="bi bi-person-fill me-2 icon-azul"></i>
                                 Nombre de Usuario
                             </label>
-
-                            <input type="text"
-                                   name="newUsername"
-                                   value="@Model.UserName"
+                            <input type="text" name="newUsername" value="@Model.UserName"
                                    class="form-control shadow-sm" />
                         </div>
 
+                        <!-- Campo Password -->
                         <div class="mb-4">
                             <label class="form-label fw-semibold">
-                                <i class="bi bi-lock-fill me-2 text-primary"></i>
+                                <i class="bi bi-lock-fill me-2 icon-azul"></i>
                                 Nueva Contraseña
                             </label>
-
-                            <input type="password"
-                                   name="newPassword"
+                            <input type="password" name="newPassword"
                                    class="form-control shadow-sm" />
                         </div>
 
+                        <!-- Botones de Acción -->
                         <div class="d-flex flex-column flex-md-row gap-3 pt-2">
-
-                            <button type="submit"
-                                    class="btn btn-primary flex-fill py-2">
+                            <button type="submit" class="btn btn-primary flex-fill py-2">
                                 <i class="bi bi-check-circle-fill me-2"></i>
                                 Guardar Cambios
                             </button>
 
-                            <a asp-action="Empleados"
-                               class="btn btn-outline-secondary flex-fill py-2 rounded-pill">
+                            <a asp-action="Empleados" class="btn btn-volver flex-fill py-2 rounded-pill">
                                 <i class="bi bi-arrow-left-circle me-2"></i>
                                 Volver
                             </a>
-
                         </div>
-
                     </form>
-
                 </div>
-
             </div>
-
         </div>
     </div>
 </div>
