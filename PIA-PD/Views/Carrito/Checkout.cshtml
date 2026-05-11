@@ -1,25 +1,27 @@
 ﻿@{
     ViewData["Title"] = "Finalizar Compra";
 }
+
 <div class="container mt-5 mb-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow-lg border-0 overflow-hidden" style="border-radius: 15px;">
-                <div class="card-header bg-dark text-white text-center py-4">
-                    <h2 class="fw-bold mb-0"><i class="bi bi-shield-lock-fill text-success me-2"></i>Pasarela de Pago Segura</h2>
+            <div class="card shadow-lg border-0 overflow-hidden" style="border-radius: 20px;">
+                <div class="card-header border-0 text-white text-center py-4" style="background: linear-gradient(135deg, var(--azul-profundo), var(--azul-marino));">
+                    <h2 class="fw-bold mb-0"><i class="bi bi-shield-lock-fill icon-oro me-2"></i>Pasarela de Pago Segura</h2>
                     <p class="mb-0 text-light opacity-75 small mt-1">Tu información está encriptada de extremo a extremo</p>
                 </div>
+
                 <div class="card-body p-4 p-md-5">
 
-                    <div class="progress mb-5" style="height: 12px; border-radius: 10px;">
-                        <div id="progreso" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 33%;"></div>
+                    <div class="progress mb-5" style="height: 12px; border-radius: 10px; background-color: var(--gris-sutil);">
+                        <div id="progreso" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 33%; background-color: var(--oro-suave);"></div>
                     </div>
 
                     <form id="checkoutForm" asp-action="FinalizarCompra" method="post">
 
                         <div id="step1">
-                            <h4 class="fw-bold mb-4 border-bottom pb-2 text-primary">
-                                <span class="badge bg-primary rounded-circle me-2">1</span>Datos de Contacto
+                            <h4 class="fw-bold mb-4 border-bottom pb-2" style="color: var(--azul-profundo);">
+                                <span class="badge rounded-circle me-2" style="background-color: var(--azul-elegante);">1</span>Datos de Contacto
                             </h4>
                             <p class="text-muted small mb-4">¿A dónde enviaremos tu recibo y las notificaciones de tu pedido?</p>
 
@@ -31,14 +33,14 @@
                                 <input type="text" id="Telefono" name="Telefono" class="form-control" placeholder="Tel" required maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                                 <label>Número de Teléfono Celular (10 dígitos)</label>
                             </div>
-                            <button type="button" class="btn btn-primary w-100 rounded-pill btn-lg shadow-sm fw-bold" onclick="goToStep(2)">
-                                Siguiente: Dirección de Envío <i class="bi bi-geo-alt-fill ms-2"></i>
+                            <button type="button" class="btn btn-primary w-100 rounded-pill btn-lg shadow-sm fw-bold py-3" onclick="goToStep(2)">
+                                Siguiente: Dirección de Envío <i class="bi bi-geo-alt-fill ms-2 icon-oro"></i>
                             </button>
                         </div>
 
                         <div id="step2" class="d-none">
-                            <h4 class="fw-bold mb-4 border-bottom pb-2 text-primary">
-                                <span class="badge bg-primary rounded-circle me-2">2</span>Dirección de Envío
+                            <h4 class="fw-bold mb-4 border-bottom pb-2" style="color: var(--azul-profundo);">
+                                <span class="badge rounded-circle me-2" style="background-color: var(--azul-elegante);">2</span>Dirección de Envío
                             </h4>
                             <p class="text-muted small mb-4">Ingresa el domicilio donde entregaremos tus libros físicos.</p>
 
@@ -75,24 +77,23 @@
                                     <i class="bi bi-arrow-left me-2"></i>Regresar
                                 </button>
                                 <button type="button" class="btn btn-primary w-50 rounded-pill fw-bold shadow-sm" onclick="goToStep(3)">
-                                    Siguiente: Método de Pago <i class="bi bi-credit-card-fill ms-2"></i>
+                                    Siguiente: Método de Pago <i class="bi bi-credit-card-fill ms-2 icon-oro"></i>
                                 </button>
                             </div>
                         </div>
 
                         <div id="step3" class="d-none">
-                            <h4 class="fw-bold mb-4 border-bottom pb-2 text-primary">
-                                <span class="badge bg-primary rounded-circle me-2">3</span>Método de Pago
+                            <h4 class="fw-bold mb-4 border-bottom pb-2" style="color: var(--azul-profundo);">
+                                <span class="badge rounded-circle me-2" style="background-color: var(--azul-elegante);">3</span>Método de Pago
                             </h4>
-                            <p class="text-muted small mb-4">Selecciona cómo deseas liquidar tu pedido.</p>
 
                             <div class="list-group mb-5">
-                                <label class="list-group-item d-flex gap-3 py-3 border rounded shadow-sm mb-3 cursor-pointer">
-                                    <input class="form-check-input mt-1" type="radio" name="Metodo" value="Tarjeta" checked onclick="togglePay('formTarjeta')">
-                                    <span class="fw-bold text-dark"><i class="bi bi-credit-card-2-front-fill text-primary me-2"></i> Tarjeta de Crédito o Débito</span>
+                                <label class="list-group-item d-flex gap-3 py-3 border rounded shadow-sm mb-3 cursor-pointer border-azul-claro">
+                                    <input class="form-check-input mt-1 custom-radio" type="radio" name="Metodo" value="Tarjeta" checked onclick="togglePay('formTarjeta')">
+                                    <span class="fw-bold text-dark"><i class="bi bi-credit-card-2-front-fill icon-azul me-2"></i> Tarjeta de Crédito o Débito</span>
                                 </label>
 
-                                <div id="formTarjeta" class="p-4 bg-light rounded mb-4 border">
+                                <div id="formTarjeta" class="p-4 rounded mb-4 border shadow-inner" style="background-color: var(--azul-claro);">
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold text-muted">Nombre del Titular</label>
                                         <input type="text" class="form-control" placeholder="Ej. Juan Pérez" required id="reqName" oninput="this.value = this.value.replace(/[0-9]/g, '');">
@@ -104,36 +105,35 @@
                                     <div class="row">
                                         <div class="col-6">
                                             <label class="form-label small fw-bold text-muted">Vencimiento</label>
-                                            <input type="text" class="form-control" placeholder="MM/YY" maxlength="5" required id="reqDate">
+                                            <input type="text" id="reqDate" class="form-control" placeholder="MM/YY" maxlength="5" required>
                                         </div>
                                         <div class="col-6">
                                             <label class="form-label small fw-bold text-muted">CVV</label>
-                                            <input type="password" class="form-control" placeholder="123" maxlength="3" required id="reqCvv" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                                            <input type="password" id="reqCvv" class="form-control" placeholder="123" maxlength="3" required oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                                         </div>
                                     </div>
                                 </div>
 
-                                <label class="list-group-item d-flex gap-3 py-3 border rounded shadow-sm mb-3 cursor-pointer">
-                                    <input class="form-check-input mt-1" type="radio" name="Metodo" value="PayPal" onclick="togglePay()">
-                                    <span class="fw-bold text-dark"><i class="bi bi-paypal text-info me-2"></i> Pagar con PayPal</span>
+                                <label class="list-group-item d-flex gap-3 py-3 border rounded shadow-sm mb-3 cursor-pointer border-azul-claro">
+                                    <input class="form-check-input mt-1 custom-radio" type="radio" name="Metodo" value="PayPal" onclick="togglePay()">
+                                    <span class="fw-bold text-dark"><i class="bi bi-paypal text-info me-2"></i> PayPal</span>
                                 </label>
 
-                                <label class="list-group-item d-flex gap-3 py-3 border rounded shadow-sm cursor-pointer">
-                                    <input class="form-check-input mt-1" type="radio" name="Metodo" value="OXXO" onclick="togglePay()">
-                                    <span class="fw-bold text-dark"><i class="bi bi-shop text-danger me-2"></i> Pago en Efectivo (Generar Ticket OXXO)</span>
+                                <label class="list-group-item d-flex gap-3 py-3 border rounded shadow-sm cursor-pointer border-azul-claro">
+                                    <input class="form-check-input mt-1 custom-radio" type="radio" name="Metodo" value="OXXO" onclick="togglePay()">
+                                    <span class="fw-bold text-dark"><i class="bi bi-shop icon-azul me-2"></i> Pago en Efectivo (OXXO)</span>
                                 </label>
                             </div>
 
-                            <div class="d-flex gap-3 mt-4">
+                            <div class="d-flex gap-3">
                                 <button type="button" class="btn btn-outline-secondary w-50 rounded-pill fw-bold" onclick="goToStep(2)">
                                     <i class="bi bi-arrow-left me-2"></i>Regresar
                                 </button>
-                                <button type="button" onclick="procesarPagoFinal()" class="btn btn-success w-50 rounded-pill fw-bold shadow-lg py-2" style="font-size: 1.1rem;">
-                                    PAGAR Y FINALIZAR <i class="bi bi-check2-circle ms-2"></i>
+                                <button type="button" onclick="procesarPagoFinal()" class="btn btn-primary w-50 rounded-pill fw-bold shadow-lg py-3" style="background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino));">
+                                    PAGAR Y FINALIZAR <i class="bi bi-check2-circle ms-2 icon-oro"></i>
                                 </button>
                             </div>
                         </div>
-
                     </form>
                 </div>
             </div>
@@ -142,23 +142,52 @@
 </div>
 
 <style>
-    .cursor-pointer {
-        cursor: pointer;
-        transition: all 0.2s;
+    /* BOTÓN OK DE SWEETALERT */
+    .swal2-confirm {
+        background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino)) !important;
+        border-radius: 40px !important;
+        padding: 10px 30px !important;
     }
 
-        .cursor-pointer:hover {
-            background-color: #f8f9fa;
-            transform: translateY(-2px);
-        }
+    .swal2-title {
+        font-family: 'Playfair Display', serif !important;
+        color: var(--azul-profundo) !important;
+    }
+
+    /* DISEÑO DE INPUTS Y BOTONES */
+    .form-control {
+        border-radius: 48px !important;
+    }
+
+    .form-floating > label {
+        padding-left: 1.5rem;
+    }
+
+    .form-floating > .form-control {
+        padding-left: 1.5rem;
+    }
+
+    .cursor-pointer:hover {
+        background-color: var(--azul-claro) !important;
+        transform: translateY(-2px);
+        transition: 0.2s;
+    }
+
+    .border-azul-claro {
+        border-color: rgba(93, 155, 181, 0.2) !important;
+    }
+
+    .custom-radio:checked {
+        background-color: var(--azul-elegante) !important;
+        border-color: var(--azul-elegante) !important;
+    }
 </style>
 
 <script>
+    // FORMATEO DE FECHA MM/YY
     document.getElementById('reqDate').addEventListener('input', function (e) {
         let val = this.value.replace(/[^0-9]/g, '');
-        if (val.length >= 3) {
-            val = val.substring(0, 2) + '/' + val.substring(2, 4);
-        }
+        if (val.length >= 3) { val = val.substring(0, 2) + '/' + val.substring(2, 4); }
         this.value = val;
     });
 
@@ -166,15 +195,8 @@
         if (s === 2) {
             const email = document.getElementById('Email').value.trim();
             const tel = document.getElementById('Telefono').value.trim();
-
-            if (!email) {
-                Swal.fire('Falta Información', 'Por favor ingresa tu Correo Electrónico.', 'warning');
-                return;
-            }
-            if (!tel || tel.length < 10) {
-                Swal.fire('Falta Información', 'Ingresa un número de Teléfono válido de 10 dígitos.', 'warning');
-                return;
-            }
+            if (!email) { Swal.fire('Falta Información', 'Por favor ingresa tu Correo Electrónico.', 'warning'); return; }
+            if (!tel || tel.length < 10) { Swal.fire('Falta Información', 'Ingresa un número de Teléfono válido de 10 dígitos.', 'warning'); return; }
         }
 
         if (s === 3) {
@@ -182,43 +204,29 @@
             const cp = document.getElementById('CP').value.trim();
             const ciudad = document.getElementById('Ciudad').value.trim();
             const estado = document.getElementById('Estado').value.trim();
-
-            if (!calle || !cp || !ciudad || !estado) {
-                Swal.fire('Falta Información', 'Por favor completa todos los campos de tu Dirección.', 'warning');
-                return;
-            }
-            if (cp.length < 5) {
-                Swal.fire('Falta Información', 'El Código Postal debe ser de 5 dígitos.', 'warning');
-                return;
-            }
+            if (!calle || !cp || !ciudad || !estado) { Swal.fire('Falta Información', 'Por favor completa todos los campos de tu Dirección.', 'warning'); return; }
+            if (cp.length < 5) { Swal.fire('Falta Información', 'El Código Postal debe ser de 5 dígitos.', 'warning'); return; }
         }
 
         document.getElementById('step1').classList.add('d-none');
         document.getElementById('step2').classList.add('d-none');
         document.getElementById('step3').classList.add('d-none');
-
         document.getElementById('step' + s).classList.remove('d-none');
-
         document.getElementById('progreso').style.width = (s === 1 ? 33 : s === 2 ? 66 : 100) + '%';
     }
 
     function togglePay(id) {
         document.getElementById('formTarjeta').classList.add('d-none');
-        if(id) {
-            document.getElementById(id).classList.remove('d-none');
-        }
+        if(id) { document.getElementById(id).classList.remove('d-none'); }
     }
 
-    // --- FUNCIÓN MÁGICA PARA EVITAR EL BLOQUEO DEL NAVEGADOR ---
     function procesarPagoFinal() {
         const metodo = document.querySelector('input[name="Metodo"]:checked').value;
-
         if (metodo === 'Tarjeta') {
             const nombre = document.getElementById('reqName').value.trim();
             const num = document.getElementById('reqNum').value.trim();
             const fecha = document.getElementById('reqDate').value.trim();
             const cvv = document.getElementById('reqCvv').value.trim();
-
             if (!nombre || num.length < 16 || fecha.length < 5 || cvv.length < 3) {
                 Swal.fire('Falta Información', 'Por favor completa todos los datos de tu tarjeta.', 'warning');
                 return;

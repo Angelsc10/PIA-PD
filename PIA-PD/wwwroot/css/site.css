@@ -444,3 +444,16 @@ footer {
         background: var(--gris-sutil);
         color: var(--azul-profundo);
     }
+
+/* Forzar el color de los botones de SweetAlert2 para que coincidan con tu diseño */
+.swal2-confirm {
+    background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino)) !important;
+    border-radius: 40px !important; /* Estilo pill de tu CSS */
+    font-family: 'Inter', sans-serif !important;
+    padding: 10px 30px !important;
+}
+
+.swal2-title {
+    font-family: 'Playfair Display', serif !important; /* Tu fuente elegante para títulos */
+    color: var(--azul-profundo) !important;
+}
