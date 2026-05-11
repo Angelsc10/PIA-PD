@@ -1,6 +1,6 @@
 ﻿@model PIA_PD.Models.Venta
 @{
-    Layout = null; // Esto evita que el Layout intente cargar el CarritoItem y rompa la página
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -12,47 +12,82 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
+        :root {
+            --azul-profundo: #0B2B40;
+            --azul-marino: #144A66;
+            --azul-elegante: #2A6F8F;
+            --azul-claro: #E6F2F5;
+            --blanco-humo: #F8F9FA;
+            --oro-suave: #D4AF37;
+            --gris-elegante: #6C757D;
+        }
+
         body {
-            background: #e9ecef;
-            padding: 20px;
-            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--blanco-humo) 0%, #F0F5FA 100%);
+            padding: 40px 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        h4, h6, h2 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
         }
 
         .ticket-box {
-            max-width: 450px;
+            max-width: 480px;
             margin: auto;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 28px;
+            box-shadow: 0 12px 40px rgba(11, 43, 64, 0.12);
             overflow: hidden;
+            border: 1px solid rgba(42, 111, 143, 0.1);
         }
 
-        .header-oxxo {
-            background: #e11f1c;
+        .header-ticket {
+            background: linear-gradient(135deg, var(--azul-profundo), var(--azul-marino));
             color: white;
-            padding: 25px;
+            padding: 35px 25px;
             text-align: center;
         }
 
-        .header-success {
-            background: #198754;
-            color: white;
-            padding: 25px;
+        .header-oxxo-white {
+            background: white;
+            padding: 30px;
             text-align: center;
+            border-bottom: 4px solid #e11f1c;
         }
 
         .barcode-section {
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            padding: 20px;
+            background: var(--azul-claro);
+            border: 2px dashed var(--azul-elegante);
+            border-radius: 20px;
+            padding: 25px;
             margin: 20px;
             text-align: center;
         }
+
+        .item-row {
+            border-bottom: 1px solid var(--azul-claro);
+            padding: 10px 0;
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino));
+            border: none;
+            border-radius: 40px;
+            padding: 12px;
+        }
+
         @("@") media print {
             .no-print
 
         {
             display: none !important;
+        }
+
+        .ticket-box {
+            box-shadow: none;
+            border: 1px solid #eee;
         }
 
         }
@@ -63,56 +98,58 @@
     <div class="ticket-box">
         @if (Model.MetodoPago == "OXXO")
         {
-            <div class="header-oxxo">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/6/66/Oxxo_Logo.svg" width="120" class="mb-2">
-                <h4 class="fw-bold mb-0">ORDEN DE PAGO EN CAJA</h4>
+            <div class="header-oxxo-white">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/66/Oxxo_Logo.svg" width="130" class="mb-3">
+                <h4 class="mb-0 text-dark">ORDEN DE PAGO</h4>
+                <p class="text-muted small mb-0">OXXO Pay™</p>
             </div>
             <div class="p-4">
                 <p class="text-center text-muted small">Presenta esta ficha al cajero para completar tu pedido</p>
                 <div class="barcode-section">
-                    <h6 class="fw-bold text-dark">REFERENCIA DE PAGO</h6>
+                    <h6 class="text-dark mb-3">REFERENCIA DE PAGO</h6>
                     <svg id="barcode"></svg>
-                    <div class="mt-2 fw-bold fs-5 text-primary">REF-@Model.Id.ToString("000000")</div>
+                    <div class="mt-2 fw-bold fs-5" style="color: var(--azul-profundo);">REF-@Model.Id.ToString("000000")</div>
                 </div>
-                <div class="text-start mt-3 small text-secondary">
-                    <p class="mb-1"><strong>1.</strong> Acude a tu tienda OXXO más cercana.</p>
-                    <p class="mb-1"><strong>2.</strong> Indica que realizarás un pago de <strong>OXXO Pay</strong>.</p>
-                    <p class="mb-0"><strong>3.</strong> El pago se notificará automáticamente a la librería.</p>
+                <div class="text-start mt-3 small text-secondary px-2">
+                    <p class="mb-1"><i class="bi bi-info-circle-fill me-2 icon-azul"></i> Indica al cajero que es un pago de <strong>OXXO Pay</strong>.</p>
+                    <p class="mb-0"><i class="bi bi-clock-history me-2 icon-azul"></i> El pago se refleja de forma inmediata.</p>
                 </div>
             </div>
         }
         else
         {
-            <div class="header-success">
-                <i class="bi bi-bag-check-fill display-4"></i>
-                <h4 class="fw-bold mt-2">¡GRACIAS POR TU COMPRA!</h4>
-                <p class="mb-0 small">Tu pedido ha sido procesado con éxito</p>
+            <div class="header-ticket">
+                <i class="bi bi-check2-circle display-4 mb-2 icon-oro"></i>
+                <h4 class="mb-0">¡GRACIAS POR TU COMPRA!</h4>
+                <p class="mb-0 small opacity-75">Tu pedido ha sido procesado</p>
             </div>
             <div class="p-4">
-                <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                    <span>Folio:</span> <span class="fw-bold">#@Model.Id</span>
+                <div class="d-flex justify-content-between mb-4">
+                    <span class="text-muted small">Folio: #@Model.Id</span>
+                    <span class="badge rounded-pill" style="background-color: var(--azul-claro); color: var(--azul-elegante);">@Model.MetodoPago</span>
                 </div>
-                <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
-                    <span>Método Utilizado:</span> <span class="fw-bold">@Model.MetodoPago</span>
-                </div>
-                <h6 class="fw-bold mb-2">Resumen de Libros:</h6>
+                <h6 class="mb-3 border-bottom pb-2">Resumen:</h6>
                 @foreach (var d in Model.Detalles)
                 {
-                    <div class="d-flex justify-content-between small text-muted mb-1">
+                    <div class="d-flex justify-content-between small item-row">
                         <span>@d.Cantidad x @d.Titulo</span>
-                        <span>$@((d.PrecioUnitario * d.Cantidad).ToString("0.00"))</span>
+                        <span class="fw-bold">$@((d.PrecioUnitario * d.Cantidad).ToString("0.00"))</span>
                     </div>
                 }
             </div>
         }
 
-        <div class="p-4 border-top bg-light text-center">
-            <h2 class="fw-bold text-dark mb-0">Total: $@Model.Total.ToString("0.00") MXN</h2>
-            <div class="d-grid gap-2 mt-4 no-print">
-                <button onclick="window.print()" class="btn btn-dark rounded-pill py-2 fw-bold">
-                    <i class="bi bi-file-earmark-pdf me-2"></i>Guardar como PDF / Imprimir
+        <div class="p-4 border-top bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <span class="h5 mb-0 text-muted">Total:</span>
+                <h2 class="fw-bold mb-0" style="color: var(--azul-profundo);">$@Model.Total.ToString("0.00") <small class="fs-6">MXN</small></h2>
+            </div>
+
+            <div class="d-grid gap-2 no-print">
+                <button onclick="window.print()" class="btn btn-primary btn-print fw-bold shadow-sm">
+                    <i class="bi bi-printer-fill me-2 icon-oro"></i>Imprimir Comprobante
                 </button>
-                <a href="/" class="btn btn-link text-decoration-none text-secondary">Volver a la Librería</a>
+                <a href="/" class="btn btn-link text-decoration-none text-secondary small">Volver a la Librería</a>
             </div>
         </div>
     </div>
@@ -121,10 +158,10 @@
     <script>
         JsBarcode("#barcode", "LIBRERIA-@Model.Id-OXXO", {
             format: "CODE128",
-            width: 2,
-            height: 50,
+            width: 1.8,
+            height: 60,
             displayValue: false,
-            lineColor: "#212529"
+            lineColor: "#0B2B40"
         });
     </script>
 </body>
