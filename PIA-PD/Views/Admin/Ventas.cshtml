@@ -4,13 +4,16 @@
 }
 
 <div class="container mt-5 mb-5">
+    <!-- Encabezado Estilizado -->
     <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <h2 class="fw-bold"><i class="bi bi-receipt me-2"></i>Historial de Ventas</h2>
+        <h2 class="fw-bold text-dark">
+            <i class="bi bi-receipt me-2 icon-azul"></i>Historial de Ventas
+        </h2>
         <div>
-            <a asp-action="ExportarExcel" class="btn btn-success rounded-pill shadow-sm me-2">
-                <i class="bi bi-file-earmark-excel-fill me-1"></i> Exportar a Excel
+            <a asp-action="ExportarExcel" class="btn btn-primary rounded-pill shadow-sm me-2">
+                <i class="bi bi-file-earmark-excel-fill me-1 icon-oro"></i> Exportar a Excel
             </a>
-            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill shadow-sm">
+            <a asp-action="Index" class="btn btn-volver rounded-pill shadow-sm">
                 <i class="bi bi-arrow-left me-1"></i> Volver al Panel
             </a>
         </div>
@@ -18,67 +21,82 @@
 
     @if (Model == null || !Model.Any())
     {
-        <div class="alert alert-info text-center py-5 shadow-sm border-0 rounded">
-            <i class="bi bi-info-circle display-4 d-block mb-3 text-info"></i>
-            <p class="fs-4 fw-bold">Aún no hay ventas registradas.</p>
-            <p>Las compras de los clientes aparecerán aquí automáticamente.</p>
+        <div class="card border-0 shadow-sm rounded-4 py-5 text-center">
+            <div class="card-body">
+                <i class="bi bi-info-circle display-4 d-block mb-3 icon-azul"></i>
+                <p class="fs-4 fw-bold text-dark">Aún no hay ventas registradas.</p>
+                <p class="text-muted">Las compras de los clientes aparecerán aquí automáticamente.</p>
+            </div>
         </div>
     }
     else
     {
-        <div class="card shadow border-0">
+        <div class="card shadow-md border-0">
             <div class="card-body p-0 table-responsive">
                 <table class="table table-hover mb-0 text-center align-middle">
-                    <thead class="table-dark">
+                    <!-- Cabecera con colores de la marca -->
+                    <thead style="background: linear-gradient(135deg, var(--azul-profundo), var(--azul-marino)); color: white;">
                         <tr>
-                            <th>Folio</th>
-                            <th>Fecha y Hora</th>
-                            <th>Cliente</th>
-                            <th>Artículos</th>
-                            <th>Total de Venta</th>
-                            <th>Acciones</th>
+                            <th class="py-3">Folio</th>
+                            <th class="py-3">Fecha y Hora</th>
+                            <th class="py-3">Cliente</th>
+                            <th class="py-3">Artículos</th>
+                            <th class="py-3">Total de Venta</th>
+                            <th class="py-3">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var venta in Model)
                         {
                             <tr>
-                                <td class="fw-bold text-primary">#@venta.Id</td>
-                                <td>@venta.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td><span class="badge bg-secondary rounded-pill px-3 py-2">@venta.Usuario</span></td>
-                                <td>@venta.Detalles.Sum(d => d.Cantidad) libros</td>
-                                <td class="text-success fw-bold fs-5">$@venta.Total.ToString("0.00")</td>
+                                <td class="fw-bold icon-azul">#@venta.Id</td>
+                                <td class="text-muted">@venta.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-dark rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#detalles-@venta.Id" aria-expanded="false">
-                                        <i class="bi bi-eye"></i> Ver Libros
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: var(--azul-claro); color: var(--azul-profundo);">
+                                        <i class="bi bi-person me-1"></i>@venta.Usuario
+                                    </span>
+                                </td>
+                                <td><span class="fw-bold">@venta.Detalles.Sum(d => d.Cantidad)</span> <small class="text-muted">uds.</small></td>
+                                <td class="fw-bold fs-5 icon-azul">$@venta.Total.ToString("0.00")</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#detalles-@venta.Id" aria-expanded="false">
+                                        <i class="bi bi-eye-fill me-1"></i> Detalles
                                     </button>
                                 </td>
                             </tr>
-                            <tr class="collapse bg-light" id="detalles-@venta.Id">
+
+                            <!-- Desglose de Detalles (Sub-tabla) -->
+                            <tr class="collapse" id="detalles-@venta.Id" style="background-color: var(--blanco-humo);">
                                 <td colspan="6" class="p-0 border-0">
                                     <div class="p-4 border-bottom shadow-inner">
-                                        <h6 class="fw-bold text-start mb-3 text-muted"><i class="bi bi-box-seam me-2"></i>Desglose del Folio #@venta.Id</h6>
-                                        <table class="table table-sm table-bordered bg-white mb-0 text-start shadow-sm">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>Título del Libro</th>
-                                                    <th class="text-center" style="width: 100px;">Cant.</th>
-                                                    <th class="text-end" style="width: 150px;">Precio Unit.</th>
-                                                    <th class="text-end" style="width: 150px;">Subtotal</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach (var detalle in venta.Detalles)
-                                                {
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div style="width: 4px; height: 20px; background-color: var(--oro-suave); margin-right: 10px; border-radius: 2px;"></div>
+                                            <h6 class="fw-bold mb-0 text-dark">Desglose del Folio #@venta.Id</h6>
+                                        </div>
+
+                                        <div class="table-responsive rounded-3 overflow-hidden border shadow-sm">
+                                            <table class="table table-sm bg-white mb-0 text-start">
+                                                <thead class="bg-light text-muted">
                                                     <tr>
-                                                        <td>@detalle.Titulo</td>
-                                                        <td class="text-center">@detalle.Cantidad</td>
-                                                        <td class="text-end">$@detalle.PrecioUnitario.ToString("0.00")</td>
-                                                        <td class="text-end fw-bold">$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("0.00"))</td>
+                                                        <th class="ps-3">Título del Libro</th>
+                                                        <th class="text-center" style="width: 100px;">Cant.</th>
+                                                        <th class="text-end" style="width: 150px;">Precio Unit.</th>
+                                                        <th class="text-end pe-3" style="width: 150px;">Subtotal</th>
                                                     </tr>
-                                                }
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var detalle in venta.Detalles)
+                                                    {
+                                                        <tr>
+                                                            <td class="ps-3 fw-medium">@detalle.Titulo</td>
+                                                            <td class="text-center">@detalle.Cantidad</td>
+                                                            <td class="text-end text-muted">$@detalle.PrecioUnitario.ToString("0.00")</td>
+                                                            <td class="text-end fw-bold icon-azul pe-3">$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("0.00"))</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -89,3 +107,25 @@
         </div>
     }
 </div>
+
+<style>
+    /* Estilos específicos para esta vista que complementan tu CSS global */
+    .shadow-inner {
+        box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: var(--azul-claro);
+        transition: var(--transition);
+    }
+
+    .btn-outline-primary {
+        color: var(--azul-elegante);
+        border-color: var(--azul-elegante);
+    }
+
+        .btn-outline-primary:hover {
+            background-color: var(--azul-elegante);
+            color: white;
+        }
+</style>
