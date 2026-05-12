@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - El Rincón del Libro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
@@ -16,41 +16,67 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark mb-3 shadow sticky-top">
-            <div class="container-fluid">
-                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index"><i class="bi bi-book-half me-2"></i>El Rincón del Libro</a>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Catálogo</a></li>
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-premium sticky-top py-3">
+            <div class="container-fluid px-4">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-book-half text-warning fs-3"></i>
+                    <span>El Rincón del Libro</span>
+                </a>
+                <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="navbar-collapse collapse" id="navbarMain">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                        <li class="nav-item">
+                            <a class="nav-link fs-6" asp-controller="Home" asp-action="Index">Catálogo</a>
+                        </li>
                     </ul>
-                    <ul class="navbar-nav align-items-center gap-2">
+                    <ul class="navbar-nav align-items-center gap-3">
                         @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
                         {
-                            <li class="nav-item me-1">
-                                <a class="nav-link text-white position-relative" asp-controller="Deseos" asp-action="Index" title="Mi Lista de Deseos">
-                                    <i class="bi bi-heart fs-4"></i>
+                            <li class="nav-item">
+                                <a class="nav-link text-white position-relative hover-lift" asp-controller="Deseos" asp-action="Index" title="Lista de Deseos">
+                                    <i class="bi bi-heart fs-5"></i>
                                 </a>
                             </li>
-                            <li class="nav-item cart-icon-container">
-                                <a class="nav-link text-white position-relative" href="javascript:void(0)" onclick="openCart()">
-                                    <i class="bi bi-cart3 fs-4"></i>
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cartBadge">0</span>
+                            <li class="nav-item">
+                                <a class="nav-link text-white position-relative hover-lift" href="javascript:void(0)" onclick="openCart()">
+                                    <i class="bi bi-bag fs-5"></i>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-dark" id="cartBadge" style="font-size: 0.65rem;">0</span>
                                 </a>
                             </li>
                         }
+
+                        <div class="vr d-none d-lg-block bg-white opacity-25 mx-2"></div>
+
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle rounded-pill px-3 border" href="#" data-bs-toggle="dropdown">@User.Identity.Name</a>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                    <li><form asp-controller="Account" asp-action="Logout" method="post"><button type="submit" class="dropdown-item text-danger">Cerrar Sesión</button></form></li>
+                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
+                                    <div class="bg-light text-dark rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width: 32px; height: 32px;">
+                                        @User.Identity.Name.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <span class="fw-medium">@User.Identity.Name</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 rounded-3">
+                                    @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
+                                    {
+                                        <li><a class="dropdown-item py-2" asp-controller="Pedidos" asp-action="Index"><i class="bi bi-box-seam me-2 text-muted"></i>Mis Pedidos</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            <button type="submit" class="dropdown-item py-2 text-danger fw-medium"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</button>
+                                        </form>
+                                    </li>
                                 </ul>
                             </li>
                         }
                         else
                         {
-                            <li class="nav-item"><a class="nav-link btn btn-outline-light rounded-pill px-3" asp-controller="Account" asp-action="Login">Iniciar Sesión</a></li>
-                            <li class="nav-item"><a class="nav-link btn btn-primary rounded-pill px-3" asp-controller="Account" asp-action="Register">Registrarse</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Ingresar</a></li>
+                            <li class="nav-item"><a class="btn btn-outline-light rounded-pill px-4 fw-bold" asp-controller="Account" asp-action="Register">Regístrate</a></li>
                         }
                     </ul>
                 </div>
@@ -58,13 +84,32 @@
         </nav>
     </header>
 
-    <main role="main" class="pb-3 flex-grow-1">
-        <div class="container-fluid">
-            @RenderBody()
-        </div>
+    <main role="main" class="pb-5 flex-grow-1">
+        @RenderBody()
     </main>
 
-    <!-- MENÚ LATERAL DEL CARRITO -->
+    <footer class="bg-dark text-white pt-5 pb-4 mt-auto">
+        <div class="container text-center text-md-start">
+            <div class="row text-center text-md-start">
+                <div class="col-md-4 col-lg-4 col-xl-4 mx-auto mt-3">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning"><i class="bi bi-book-half me-2"></i>El Rincón del Libro</h5>
+                    <p class="text-light opacity-75">Tu destino ideal para encontrar las mejores historias, manuales técnicos y aventuras. Alimentando mentes desde hoy.</p>
+                </div>
+                <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mt-3">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">Contacto</h5>
+                    <p class="text-light opacity-75"><i class="bi bi-house-door-fill me-2"></i> UANL, San Nicolás</p>
+                    <p class="text-light opacity-75"><i class="bi bi-envelope-fill me-2"></i> contacto@rincondellibro.com</p>
+                </div>
+            </div>
+            <hr class="mb-4 opacity-25">
+            <div class="row align-items-center">
+                <div class="col-md-7 col-lg-8">
+                    <p class="text-light opacity-75 small mb-0">© 2026 Desarrollado para PIA. Todos los derechos reservados.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <div class="offcanvas offcanvas-start shadow" tabindex="-1" id="cartSidebar" style="width: 400px;">
         <div class="offcanvas-header bg-dark text-white">
             <h5 class="offcanvas-title fw-bold">Mi Carrito</h5>
@@ -73,7 +118,6 @@
         <div class="offcanvas-body" id="cartBody"></div>
     </div>
 
-    <!-- INTERFAZ DEL BOT -->
     <div id="botWindow" class="card shadow position-fixed border-0" style="bottom: 90px; right: 20px; width: 350px; z-index: 1050; display: none;">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center rounded-top">
             <h6 class="mb-0"><i class="bi bi-robot me-2"></i>Asistente Virtual</h6>
@@ -123,7 +167,7 @@
                     refreshCart();
                     Swal.fire({ icon: 'success', title: '¡Éxito!', text: res.message, toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Cupón inválido', text: res.message, confirmButtonColor: '#0d6efd' });
+                    Swal.fire({ icon: 'error', title: 'Cupón inválido', text: res.message, confirmButtonColor: '#0f172a' });
                 }
             });
         }
@@ -135,8 +179,12 @@
         }
 
         function addToCart(id, titulo) {
-            let botonesAsociados = $('[onclick*="' + id + '"]');
-            botonesAsociados.css('pointer-events', 'none');
+            // Buscamos 100% seguro solo el botón del Home
+            let btnHome = $('button').filter(function() {
+                let oc = $(this).attr('onclick');
+                return oc && oc.includes(`addToCart('${id}'`);
+            });
+            btnHome.css('pointer-events', 'none');
 
             $.post('/Carrito/Agregar', { id: id, cantidad: 1 }, function (res) {
                 if (res.success) {
@@ -144,27 +192,45 @@
                     Swal.fire({
                         icon: 'success', title: '¡Añadido!', text: titulo + " se agregó al carrito.", toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
                     });
-                    botonesAsociados.css('pointer-events', 'auto');
+                    btnHome.css('pointer-events', 'auto');
                 } else {
                     Swal.fire({ icon: 'info', title: 'Sin Existencias', text: res.message, confirmButtonColor: '#28a745' });
-                    botonesAsociados.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle me-2"></i>Agotado');
+                    btnHome.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle-fill fs-5"></i>');
                 }
             });
         }
 
         function modQty(id, cambio) {
-            let btnTrigger = $(`[onclick*="modQty('${id}', ${cambio})"]`);
+            let btnTrigger = $('button').filter(function() {
+                let oc = $(this).attr('onclick');
+                return oc && oc.includes(`modQty('${id}', ${cambio})`);
+            });
             btnTrigger.css('pointer-events', 'none');
 
             $.post('/Carrito/ActualizarCantidad', { id: id, cambio: cambio }, function(res) {
                 if (res.success) {
                     refreshCart();
                     if (cambio < 0) {
-                        $('[onclick*="' + id + '"]').prop('disabled', false).removeClass('disabled text-muted').css('pointer-events', 'auto');
+                        // LA MAGIA: Restauramos los botones a su estado original de forma segura
+                        let btnHome = $('button').filter(function() {
+                            let oc = $(this).attr('onclick');
+                            return oc && oc.includes(`addToCart('${id}'`);
+                        });
+                        btnHome.prop('disabled', false).removeClass('disabled text-muted').css('pointer-events', 'auto').html('<i class="bi bi-bag-plus-fill fs-5"></i>');
+
+                        let btnDetails = $('button').filter(function() {
+                            let oc = $(this).attr('onclick');
+                            return oc && oc.includes(`addFromDetails('${id}'`);
+                        });
+                        btnDetails.prop('disabled', false).removeClass('disabled text-muted').css('pointer-events', 'auto').html('<i class="bi bi-bag-plus fs-5"></i> Añadir a la bolsa');
                     }
                 } else {
-                    Swal.fire({ icon: 'warning', title: 'Límite Alcanzado', text: 'Has llegado al máximo de unidades disponibles en el Admin.', confirmButtonColor: '#d33' });
-                    $(`[onclick*="modQty('${id}', 1)"]`).prop('disabled', true).addClass('disabled text-muted border-secondary');
+                    Swal.fire({ icon: 'warning', title: 'Límite Alcanzado', text: 'Has llegado al máximo de unidades disponibles.', confirmButtonColor: '#d33' });
+                    let btnMas = $('button').filter(function() {
+                        let oc = $(this).attr('onclick');
+                        return oc && oc.includes(`modQty('${id}', 1)`);
+                    });
+                    btnMas.prop('disabled', true).addClass('disabled text-muted border-secondary');
                 }
                 if(cambio < 0) btnTrigger.css('pointer-events', 'auto');
             });
@@ -172,17 +238,20 @@
 
         function addFromDetails(id, titulo) {
             const cant = document.getElementById('inputCantidadDetalle').value;
-            let btn = $('[onclick*="' + id + '"]');
-            btn.css('pointer-events', 'none');
+            let btnDetails = $('button').filter(function() {
+                let oc = $(this).attr('onclick');
+                return oc && oc.includes(`addFromDetails('${id}'`);
+            });
+            btnDetails.css('pointer-events', 'none');
 
             $.post('/Carrito/Agregar', { id: id, cantidad: cant }, function(res) {
                 if(res.success) {
                     refreshCart();
-                    Swal.fire({ icon: 'success', title: '¡Listo!', text: 'Añadido al carrito.', timer: 2000, showConfirmButton: false });
-                    btn.css('pointer-events', 'auto');
+                    Swal.fire({ icon: 'success', title: '¡Listo!', text: 'Añadido al carrito.', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
+                    btnDetails.css('pointer-events', 'auto');
                 } else {
                     Swal.fire({ icon: 'warning', title: 'Sin existencias', text: res.message });
-                    btn.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle me-2"></i>Agotado');
+                    btnDetails.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle me-2"></i>Agotado');
                 }
             });
         }
