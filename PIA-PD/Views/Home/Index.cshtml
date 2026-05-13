@@ -6,19 +6,20 @@
     List<string> categorias = ViewBag.Categorias as List<string> ?? new List<string>();
 }
 
-<div class="text-white mb-4 shadow-lg" style="background-image: url('@Url.Content("~/img/portadas/libreria.jpg")'); background-size: cover; background-position: center; padding-top: 7rem; padding-bottom: 9rem;">
+@* Hero Section con tu nueva clase hero-section y bordes dorados *@
+<div class="text-white mb-5 shadow-lg hero-section">
     <div class="container text-center">
-        <h1 class="display-4 fw-bold mb-3" style="text-shadow: 2px 2px 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.6); color: #FFFFFF;">Busca tu próxima historia</h1>
+        <h1 class="display-4 fw-bold mb-3">Busca tu próxima historia</h1>
         <div class="row justify-content-center">
             <div class="col-md-7">
-                <form asp-action="Index" method="get" class="input-group input-group-lg shadow-lg rounded-pill overflow-hidden bg-white">
-                    <input type="text" name="q" class="form-control border-0 px-4 text-dark" placeholder="Título, autor o palabra clave..." value="@busquedaActual">
+                <form asp-action="Index" method="get" class="input-group input-group-lg shadow-lg">
+                    <input type="text" name="q" class="form-control px-4 text-dark" placeholder="Título, autor o palabra clave..." value="@busquedaActual">
                     <button type="submit" class="btn btn-primary px-4 border-0"><i class="bi bi-search fs-5"></i></button>
                 </form>
                 @if (!string.IsNullOrEmpty(busquedaActual) || !string.IsNullOrEmpty(categoriaActual))
                 {
                     <p class="mt-3 text-light" style="text-shadow: 1px 1px 5px rgba(0,0,0,0.8);">
-                        Filtro activo: <span class="fw-bold text-warning">@(busquedaActual ?? categoriaActual)</span>
+                        Filtro activo: <span class="fw-bold" style="color: var(--oro-suave);">@(busquedaActual ?? categoriaActual)</span>
                         | <a asp-action="Index" class="text-white text-decoration-underline ms-2 small">Quitar filtros</a>
                     </p>
                 }
@@ -29,12 +30,12 @@
 
 <div class="container-fluid px-4 px-xl-5 mb-5" style="max-width: 1400px;">
     <div class="row">
-        @* Barra Lateral *@
+        @* Barra Lateral - Adaptada a var(--azul-profundo) *@
         <div class="col-md-4 col-lg-3 mb-4">
-            <div class="card shadow-sm border-0" style="border-radius: 20px !important; overflow: hidden;">
-                <div class="card-header text-white py-3 border-0" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 20px 20px 0 0;">
-                    <h5 class="mb-0 fw-bold fs-6 text-uppercase" style="letter-spacing: 1px;">
-                        <i class="bi bi-grid-fill me-2"></i> Géneros
+            <div class="card shadow-sm border-0">
+                <div class="card-header text-white py-3 border-0" style="background: linear-gradient(135deg, var(--azul-profundo) 0%, var(--azul-marino) 100%);">
+                    <h5 class="mb-0 fw-bold fs-6 text-uppercase" style="letter-spacing: 1px; font-family: 'Inter', sans-serif;">
+                        <i class="bi bi-grid-fill me-2 icon-oro"></i> Géneros
                     </h5>
                 </div>
 
@@ -46,7 +47,7 @@
                     {
                         <a asp-action="Index" asp-route-categoria="@cat" class="list-group-item list-group-item-action border-0 px-4 py-3 d-flex justify-content-between align-items-center @(categoriaActual == cat ? "active fw-bold shadow-sm" : "")">
                             <span>
-                                <i class="bi bi-chevron-right me-2 @(categoriaActual == cat ? "text-white" : "text-muted")" style="font-size: 0.8rem;"></i>
+                                <i class="bi bi-chevron-right me-2 @(categoriaActual == cat ? "text-white" : "icon-azul")" style="font-size: 0.8rem;"></i>
                                 @cat
                             </span>
                         </a>
@@ -59,9 +60,9 @@
         <div class="col-md-8 col-lg-9">
             @if (!Model.Any())
             {
-                <div class="text-center py-5 bg-light rounded border">
-                    <i class="bi bi-emoji-frown display-1 text-muted"></i>
-                    <h3 class="mt-3 text-muted">No hay libros disponibles.</h3>
+                <div class="text-center py-5 bg-white card shadow-sm">
+                    <i class="bi bi-emoji-frown display-1 icon-gris"></i>
+                    <h3 class="mt-3 text-muted" style="font-family: 'Playfair Display', serif;">No hay libros disponibles.</h3>
                 </div>
             }
             else
@@ -75,38 +76,34 @@
                                 @if (User.Identity.IsAuthenticated)
                                 {
                                     <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
-                                        @* Corregido: Se agregaron comillas y escape de texto para evitar errores de JS *@
-                                        <button type="button" onclick="toggleWishlist('@libro.Id', '@Html.Raw(libro.Titulo.Replace("'", "\\'"))', @libro.Precio.ToString("F2", System.Globalization.CultureInfo.InvariantCulture), '@libro.PortadaUrl', this)" class="btn btn-light rounded-circle shadow text-danger p-2 border-0 transition-hover" title="Guardar en Deseos">
-                                            <i class="bi @(ViewBag.DeseosIds != null && ((List<string>)ViewBag.DeseosIds).Contains(libro.Id) ? "bi-heart-fill text-danger" : "bi-heart") fs-5"></i>
+                                        <button type="button" onclick="toggleWishlist('@libro.Id', '@Html.Raw(libro.Titulo.Replace("'", "\\'"))', @libro.Precio.ToString("F2", System.Globalization.CultureInfo.InvariantCulture), '@libro.PortadaUrl', this)" class="btn btn-light rounded-circle shadow p-2 border-0" title="Guardar en Deseos">
+                                            <i class="bi @(ViewBag.DeseosIds != null && ((List<string>)ViewBag.DeseosIds).Contains(libro.Id) ? "bi-heart-fill" : "bi-heart icon-azul") fs-5"></i>
                                         </button>
                                     </div>
                                 }
 
                                 <div class="text-center p-3">
-                                    @* Corregido: Fallback de imagen si la URL de la API falla o está vacía *@
                                     <img src="@(string.IsNullOrEmpty(libro.PortadaUrl) ? "/img/portadas/default.jpg" : libro.PortadaUrl)"
                                          class="card-img-top rounded shadow-sm"
-                                         style="height: 280px; object-fit: contain; background-color: #f8f9fa;"
+                                         style="height: 280px; object-fit: contain; background-color: var(--blanco-humo);"
                                          onerror="this.onerror=null; this.src='/img/portadas/default.jpg';">
                                 </div>
 
                                 <div class="card-body d-flex flex-column text-center">
-                                    <h6 class="card-title fw-bold text-dark mb-1 text-truncate" title="@libro.Titulo">@libro.Titulo</h6>
+                                    <h6 class="card-title fw-bold mb-1 text-truncate" style="color: var(--azul-profundo);" title="@libro.Titulo">@libro.Titulo</h6>
                                     <h6 class="card-text text-muted small mb-3">@libro.Autor</h6>
 
                                     <div class="mt-auto">
-                                        <h5 class="text-primary fw-bold mb-3">$@libro.Precio.ToString("0.00")</h5>
+                                        <h5 class="fw-bold mb-3" style="color: var(--azul-elegante); font-family: 'Inter', sans-serif;">$@libro.Precio.ToString("0.00")</h5>
 
-                                        @* Corregido: Llamada a la función unificada de Carrito *@
                                         <button type="button"
                                                 onclick="addToCart('@libro.Id', '@Html.Raw(libro.Titulo.Replace("'", "\\'"))')"
-                                                class="btn btn-primary btn-pill w-100 shadow-sm">
+                                                class="btn btn-primary w-100 shadow-sm">
                                             <i class="bi bi-cart-plus me-2"></i>Añadir al carrito
                                         </button>
 
-                                        @* Corregido: Ruta explícita para asegurar que carguen las reseñas *@
-                                        <a asp-controller="Home" asp-action="Detalles" asp-route-id="@libro.Id" class="btn btn-outline-dark rounded-pill w-100 mt-2">
-                                            <i class="bi bi-star-fill text-warning me-1"></i> Ver Reseñas
+                                        <a asp-controller="Home" asp-action="Detalles" asp-route-id="@libro.Id" class="btn btn-volver w-100 mt-2">
+                                            <i class="bi bi-star-fill icon-oro me-1"></i> Ver Reseñas
                                         </a>
                                     </div>
                                 </div>
@@ -115,7 +112,7 @@
                     }
                 </div>
 
-                @* Paginación *@
+                @* Paginación elegante *@
                 @if (ViewBag.TotalPaginas > 1)
                 {
                     <nav class="mt-5">
@@ -135,19 +132,18 @@
 </div>
 
 <style>
-    .transition-hover:hover {
-        transform: translateY(-5px);
-        transition: all 0.3s ease-in-out;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-    }
-
-    .list-group-item:hover:not(.active) {
-        background-color: #f1f5f9;
-        padding-left: 2rem !important;
-    }
-
+    /* Estilos locales para reforzar la integración con tu CSS externo */
     .list-group-item.active {
-        background: linear-gradient(135deg, #0f172a, #1e293b) !important;
-        border-color: transparent !important;
+        background: linear-gradient(135deg, var(--azul-profundo), var(--azul-marino)) !important;
+        border: none !important;
+    }
+
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino)) !important;
+        border: none !important;
+    }
+
+    .hero-section h1 {
+        font-family: 'Playfair Display', serif;
     }
 </style>
