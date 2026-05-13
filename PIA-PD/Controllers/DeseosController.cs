@@ -59,5 +59,23 @@ namespace PIA_PD.Controllers
                 return Json(new { success = true, agregado = true, message = "¡Agregado a tu Lista de Deseos!" });
             }
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Eliminar(int id)
+        {
+            var usuario = User.Identity.Name;
+
+            // Buscamos el registro por su ID y verificamos que pertenezca al usuario
+            var deseo = await _context.Deseos
+                .FirstOrDefaultAsync(d => d.Id == id && d.Usuario == usuario);
+
+            if (deseo != null)
+            {
+                _context.Deseos.Remove(deseo);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
