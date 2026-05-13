@@ -13,6 +13,32 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        :root {
+            --azul-profundo: #0f172a;
+            --azul-marino: #1e293b;
+            --azul-elegante: #334155;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .navbar-premium {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            transition: transform 0.2s;
+        }
+
+        .btn-pill {
+            border-radius: 50px;
+        }
+    </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header>
@@ -90,34 +116,34 @@
 
     <footer class="bg-dark text-white pt-5 pb-4 mt-auto">
         <div class="container text-center text-md-start">
-            <div class="row text-center text-md-start">
-                <div class="col-md-4 col-lg-4 col-xl-4 mx-auto mt-3">
+            <div class="row">
+                <div class="col-md-4 mx-auto mt-3">
                     <h5 class="text-uppercase mb-4 fw-bold text-warning"><i class="bi bi-book-half me-2"></i>El Rincón del Libro</h5>
-                    <p class="text-light opacity-75">Tu destino ideal para encontrar las mejores historias, manuales técnicos y aventuras. Alimentando mentes desde hoy.</p>
+                    <p class="text-light opacity-75">Tu destino ideal para encontrar las mejores historias.</p>
                 </div>
-                <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mt-3">
+                <div class="col-md-4 mx-auto mt-3 text-md-end">
                     <h5 class="text-uppercase mb-4 fw-bold text-warning">Contacto</h5>
                     <p class="text-light opacity-75"><i class="bi bi-house-door-fill me-2"></i> UANL, San Nicolás</p>
                     <p class="text-light opacity-75"><i class="bi bi-envelope-fill me-2"></i> contacto@rincondellibro.com</p>
                 </div>
             </div>
             <hr class="mb-4 opacity-25">
-            <div class="row align-items-center">
-                <div class="col-md-7 col-lg-8">
-                    <p class="text-light opacity-75 small mb-0">© 2026 Desarrollado para PIA. Todos los derechos reservados.</p>
-                </div>
-            </div>
+            <p class="text-center text-light opacity-75 small">© 2026 PIA_PD. Todos los derechos reservados.</p>
         </div>
     </footer>
 
-    <div class="offcanvas offcanvas-start shadow" tabindex="-1" id="cartSidebar" style="width: 400px;">
+    @* Sidebar del Carrito *@
+    <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="cartSidebar" style="width: 400px;">
         <div class="offcanvas-header bg-dark text-white">
             <h5 class="offcanvas-title fw-bold">Mi Carrito</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
         </div>
-        <div class="offcanvas-body" id="cartBody"></div>
+        <div class="offcanvas-body" id="cartBody">
+            @* Se carga vía AJAX *@
+        </div>
     </div>
 
+    @* Ventana del Bot *@
     <div id="botWindow" class="card shadow position-fixed border-0" style="bottom: 90px; right: 20px; width: 350px; z-index: 1050; display: none;">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center rounded-top">
             <h6 class="mb-0"><i class="bi bi-robot me-2"></i>Asistente Virtual</h6>
@@ -125,20 +151,20 @@
         </div>
         <div class="card-body" id="botChatBody" style="height: 350px; overflow-y: auto; background-color: #f8f9fa;">
             <div class="text-start mb-3">
-                <span class="badge bg-secondary text-wrap text-start p-2 fs-6 shadow-sm" style="font-weight: 500;">
-                    ¡Hola! Soy tu asistente de El Rincón del Libro 📚 ¿En qué te puedo ayudar hoy?
+                <span class="badge bg-secondary text-wrap text-start p-2 fs-6 shadow-sm">
+                    ¡Hola! ¿En qué puedo ayudarte hoy? 📚
                 </span>
             </div>
         </div>
         <div class="card-footer p-2 bg-white rounded-bottom border-top">
             <div class="input-group">
-                <input type="text" id="botInput" class="form-control" placeholder="Escribe tu mensaje..." onkeypress="if(event.key === 'Enter') sendBotMessage()">
+                <input type="text" id="botInput" class="form-control" placeholder="Escribe..." onkeypress="if(event.key === 'Enter') sendBotMessage()">
                 <button class="btn btn-primary" onclick="sendBotMessage()"><i class="bi bi-send"></i></button>
             </div>
         </div>
     </div>
 
-    <button id="botBtnToggle" class="btn btn-primary rounded-circle position-fixed shadow d-flex justify-content-center align-items-center" style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 1050; transition: transform 0.2s;" onclick="toggleBot()">
+    <button id="botBtnToggle" class="btn btn-primary rounded-circle position-fixed shadow d-flex justify-content-center align-items-center" style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 1050;" onclick="toggleBot()">
         <i class="bi bi-chat-dots fs-3"></i>
     </button>
 
@@ -147,149 +173,72 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // --- 1. LÓGICA DEL CARRITO Y CUPONES ---
+        // --- 1. LÓGICA DEL CARRITO ---
         const cartOff = document.getElementById('cartSidebar') ? new bootstrap.Offcanvas('#cartSidebar') : null;
-        function openCart() { refreshCart(); cartOff.show(); }
+
+        function openCart() { refreshCart(); if(cartOff) cartOff.show(); }
 
         function refreshCart() {
             $.get('/Carrito/GetCarritoPartial', function(data) {
                 $('#cartBody').html(data);
-                $('#cartBadge').text($('#cartItemCount').val() || 0);
-            });
-        }
-
-        function aplicarCupon() {
-            let cod = $('#inputCupon').val().trim();
-            if(!cod) return;
-
-            $.post('/Carrito/AplicarCupon', { codigo: cod }, function(res) {
-                if(res.success) {
-                    refreshCart();
-                    Swal.fire({ icon: 'success', title: '¡Éxito!', text: res.message, toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Cupón inválido', text: res.message, confirmButtonColor: '#0f172a' });
-                }
-            });
-        }
-
-        function quitarCupon() {
-            $.post('/Carrito/QuitarCupon', function() {
-                refreshCart();
+                // Actualiza el badge buscando el input oculto que devuelve el partial
+                let count = $('#cartItemCount').val() || 0;
+                $('#cartBadge').text(count);
             });
         }
 
         function addToCart(id, titulo) {
-            // Buscamos 100% seguro solo el botón del Home
-            let btnHome = $('button').filter(function() {
-                let oc = $(this).attr('onclick');
-                return oc && oc.includes(`addToCart('${id}'`);
-            });
-            btnHome.css('pointer-events', 'none');
-
             $.post('/Carrito/Agregar', { id: id, cantidad: 1 }, function (res) {
                 if (res.success) {
                     refreshCart();
                     Swal.fire({
-                        icon: 'success', title: '¡Añadido!', text: titulo + " se agregó al carrito.", toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
+                        icon: 'success', title: '¡Añadido!', text: titulo + " se agregó al carrito.",
+                        toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
                     });
-                    btnHome.css('pointer-events', 'auto');
                 } else {
-                    Swal.fire({ icon: 'info', title: 'Sin Existencias', text: res.message, confirmButtonColor: '#28a745' });
-                    btnHome.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle-fill fs-5"></i>');
+                    Swal.fire({ icon: 'warning', title: 'Inventario', text: res.message });
                 }
             });
         }
 
         function modQty(id, cambio) {
-            let btnTrigger = $('button').filter(function() {
-                let oc = $(this).attr('onclick');
-                return oc && oc.includes(`modQty('${id}', ${cambio})`);
-            });
-            btnTrigger.css('pointer-events', 'none');
-
             $.post('/Carrito/ActualizarCantidad', { id: id, cambio: cambio }, function(res) {
-                if (res.success) {
-                    refreshCart();
-                    if (cambio < 0) {
-                        // LA MAGIA: Restauramos los botones a su estado original de forma segura
-                        let btnHome = $('button').filter(function() {
-                            let oc = $(this).attr('onclick');
-                            return oc && oc.includes(`addToCart('${id}'`);
-                        });
-                        btnHome.prop('disabled', false).removeClass('disabled text-muted').css('pointer-events', 'auto').html('<i class="bi bi-bag-plus-fill fs-5"></i>');
-
-                        let btnDetails = $('button').filter(function() {
-                            let oc = $(this).attr('onclick');
-                            return oc && oc.includes(`addFromDetails('${id}'`);
-                        });
-                        btnDetails.prop('disabled', false).removeClass('disabled text-muted').css('pointer-events', 'auto').html('<i class="bi bi-bag-plus fs-5"></i> Añadir a la bolsa');
-                    }
-                } else {
-                    Swal.fire({ icon: 'warning', title: 'Límite Alcanzado', text: 'Has llegado al máximo de unidades disponibles.', confirmButtonColor: '#d33' });
-                    let btnMas = $('button').filter(function() {
-                        let oc = $(this).attr('onclick');
-                        return oc && oc.includes(`modQty('${id}', 1)`);
-                    });
-                    btnMas.prop('disabled', true).addClass('disabled text-muted border-secondary');
-                }
-                if(cambio < 0) btnTrigger.css('pointer-events', 'auto');
+                if (res.success) refreshCart();
+                else Swal.fire({ icon: 'error', title: 'Error', text: res.message });
             });
         }
 
-        function addFromDetails(id, titulo) {
-            const cant = document.getElementById('inputCantidadDetalle').value;
-            let btnDetails = $('button').filter(function() {
-                let oc = $(this).attr('onclick');
-                return oc && oc.includes(`addFromDetails('${id}'`);
-            });
-            btnDetails.css('pointer-events', 'none');
-
-            $.post('/Carrito/Agregar', { id: id, cantidad: cant }, function(res) {
-                if(res.success) {
-                    refreshCart();
-                    Swal.fire({ icon: 'success', title: '¡Listo!', text: 'Añadido al carrito.', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
-                    btnDetails.css('pointer-events', 'auto');
-                } else {
-                    Swal.fire({ icon: 'warning', title: 'Sin existencias', text: res.message });
-                    btnDetails.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle me-2"></i>Agotado');
-                }
+        function aplicarCupon() {
+            let cod = $('#inputCupon').val();
+            $.post('/Carrito/AplicarCupon', { codigo: cod }, function(res) {
+                if(res.success) { refreshCart(); Swal.fire('¡Éxito!', res.message, 'success'); }
+                else Swal.fire('Error', res.message, 'error');
             });
         }
 
-        $(document).ready(refreshCart);
+        function quitarCupon() {
+            $.post('/Carrito/QuitarCupon', function() { refreshCart(); });
+        }
 
-        // --- 2. LÓGICA DE LISTA DE DESEOS (El corazón) ---
+        // --- 2. LÓGICA DE LISTA DE DESEOS ---
         function toggleWishlist(id, titulo, precio, portadaUrl, btnElement) {
             $.post('/Deseos/AlternarAjax', { id: id, titulo: titulo, precio: precio, portadaUrl: portadaUrl }, function(res) {
                 if (res.success) {
                     let icon = $(btnElement).find('i');
                     if (res.agregado) {
-                        icon.removeClass('bi-heart text-dark').addClass('bi-heart-fill text-danger');
+                        icon.removeClass('bi-heart').addClass('bi-heart-fill text-danger');
                     } else {
-                        icon.removeClass('bi-heart-fill text-danger').addClass('bi-heart text-dark');
+                        icon.removeClass('bi-heart-fill text-danger').addClass('bi-heart');
                     }
-
                     Swal.fire({
-                        icon: 'success',
-                        title: res.agregado ? '¡Agregado!' : 'Eliminado',
-                        text: res.message,
-                        toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
+                        icon: 'success', title: res.agregado ? '¡Agregado!' : 'Eliminado',
+                        text: res.message, toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
                     });
                 }
             }).fail(function(xhr) {
                 if (xhr.status === 401) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Inicia Sesión',
-                        text: 'Necesitas una cuenta para crear tu lista de deseos.',
-                        confirmButtonText: 'Ir a Iniciar Sesión',
-                        showCancelButton: true,
-                        cancelButtonText: 'Cancelar'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.href = '/Account/Login';
-                        }
-                    });
+                    Swal.fire({ title: 'Inicia Sesión', text: 'Debes ingresar para usar favoritos', icon: 'info', confirmButtonText: 'Ir al Login' })
+                    .then((r) => { if(r.isConfirmed) window.location.href = '/Account/Login'; });
                 }
             });
         }
@@ -297,19 +246,6 @@
         // --- 3. LÓGICA DEL BOT ---
         function toggleBot() {
             $('#botWindow').fadeToggle('fast');
-            let icon = $('#botBtnToggle i');
-            if (icon.hasClass('bi-chat-dots')) {
-                icon.removeClass('bi-chat-dots').addClass('bi-x-lg');
-                $('#botBtnToggle').css('transform', 'rotate(90deg)');
-            } else {
-                icon.removeClass('bi-x-lg').addClass('bi-chat-dots');
-                $('#botBtnToggle').css('transform', 'rotate(0deg)');
-            }
-        }
-
-        function scrollBot() {
-            const body = document.getElementById('botChatBody');
-            body.scrollTop = body.scrollHeight;
         }
 
         function sendBotMessage() {
@@ -317,44 +253,17 @@
             const msg = input.val().trim();
             if (!msg) return;
 
-            $('#botChatBody').append(`
-                <div class="text-end mb-3">
-                    <span class="badge bg-primary text-wrap text-start p-2 fs-6 shadow-sm" style="font-weight: 500;">${msg}</span>
-                </div>
-            `);
+            $('#botChatBody').append(`<div class="text-end mb-3"><span class="badge bg-primary p-2">${msg}</span></div>`);
             input.val('');
-            scrollBot();
-
-            const typingId = 'typing-' + Date.now();
-            $('#botChatBody').append(`
-                <div class="text-start mb-3" id="${typingId}">
-                    <span class="badge bg-secondary text-wrap text-start p-2 fs-6 shadow-sm"><i class="bi bi-three-dots"></i></span>
-                </div>
-            `);
-            scrollBot();
 
             $.get('/Chatbot/Preguntar', { mensaje: msg }, function(res) {
-                $('#' + typingId).remove();
-                $('#botChatBody').append(`
-                    <div class="text-start mb-3">
-                        <span class="badge bg-secondary text-wrap text-start p-2 fs-6 shadow-sm" style="font-weight: 500;">
-                            ${res.respuesta}
-                        </span>
-                    </div>
-                `);
-                scrollBot();
-            }).fail(function() {
-                $('#' + typingId).remove();
-                $('#botChatBody').append(`
-                    <div class="text-start mb-3">
-                        <span class="badge bg-danger text-wrap text-start p-2 fs-6 shadow-sm">
-                            <i class="bi bi-exclamation-triangle me-1"></i> Hubo un error al contactar al bot.
-                        </span>
-                    </div>
-                `);
-                scrollBot();
+                $('#botChatBody').append(`<div class="text-start mb-3"><span class="badge bg-secondary p-2">${res.respuesta}</span></div>`);
+                const body = document.getElementById('botChatBody');
+                body.scrollTop = body.scrollHeight;
             });
         }
+
+        $(document).ready(refreshCart);
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

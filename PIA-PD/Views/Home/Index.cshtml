@@ -29,10 +29,10 @@
 
 <div class="container-fluid px-4 px-xl-5 mb-5" style="max-width: 1400px;">
     <div class="row">
-
+        @* Barra Lateral *@
         <div class="col-md-4 col-lg-3 mb-4">
             <div class="card shadow-sm border-0" style="border-radius: 20px !important; overflow: hidden;">
-                <div class="card-header text-white py-3 border-0" style="background: linear-gradient(135deg, var(--azul-profundo) 0%, var(--azul-marino) 100%); border-radius: 20px 20px 0 0;">
+                <div class="card-header text-white py-3 border-0" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 20px 20px 0 0;">
                     <h5 class="mb-0 fw-bold fs-6 text-uppercase" style="letter-spacing: 1px;">
                         <i class="bi bi-grid-fill me-2"></i> Géneros
                     </h5>
@@ -55,12 +55,13 @@
             </div>
         </div>
 
+        @* Listado de Libros *@
         <div class="col-md-8 col-lg-9">
             @if (!Model.Any())
             {
                 <div class="text-center py-5 bg-light rounded border">
                     <i class="bi bi-emoji-frown display-1 text-muted"></i>
-                    <h3 class="mt-3 text-muted">No hay libros disponibles en esta búsqueda.</h3>
+                    <h3 class="mt-3 text-muted">No hay libros disponibles.</h3>
                 </div>
             }
             else
@@ -74,15 +75,21 @@
                                 @if (User.Identity.IsAuthenticated)
                                 {
                                     <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
-                                        <button type="button" onclick="toggleWishlist('@libro.Id', '@Html.Raw(libro.Titulo.Replace("'", "\\'"))', @libro.Precio, '@libro.PortadaUrl', this)" class="btn btn-light rounded-circle shadow text-danger p-2 border-0 transition-hover" title="Guardar en Deseos">
-                                            <i class="bi bi-heart fs-5"></i>
+                                        @* Corregido: Se agregaron comillas y escape de texto para evitar errores de JS *@
+                                        <button type="button" onclick="toggleWishlist('@libro.Id', '@Html.Raw(libro.Titulo.Replace("'", "\\'"))', @libro.Precio.ToString("F2", System.Globalization.CultureInfo.InvariantCulture), '@libro.PortadaUrl', this)" class="btn btn-light rounded-circle shadow text-danger p-2 border-0 transition-hover" title="Guardar en Deseos">
+                                            <i class="bi @(ViewBag.DeseosIds != null && ((List<string>)ViewBag.DeseosIds).Contains(libro.Id) ? "bi-heart-fill text-danger" : "bi-heart") fs-5"></i>
                                         </button>
                                     </div>
                                 }
 
                                 <div class="text-center p-3">
-                                    <img src="@libro.PortadaUrl" class="card-img-top rounded shadow-sm" style="height: 280px; object-fit: contain; background-color: #f8f9fa;">
+                                    @* Corregido: Fallback de imagen si la URL de la API falla o está vacía *@
+                                    <img src="@(string.IsNullOrEmpty(libro.PortadaUrl) ? "/img/portadas/default.jpg" : libro.PortadaUrl)"
+                                         class="card-img-top rounded shadow-sm"
+                                         style="height: 280px; object-fit: contain; background-color: #f8f9fa;"
+                                         onerror="this.onerror=null; this.src='/img/portadas/default.jpg';">
                                 </div>
+
                                 <div class="card-body d-flex flex-column text-center">
                                     <h6 class="card-title fw-bold text-dark mb-1 text-truncate" title="@libro.Titulo">@libro.Titulo</h6>
                                     <h6 class="card-text text-muted small mb-3">@libro.Autor</h6>
@@ -90,13 +97,15 @@
                                     <div class="mt-auto">
                                         <h5 class="text-primary fw-bold mb-3">$@libro.Precio.ToString("0.00")</h5>
 
+                                        @* Corregido: Llamada a la función unificada de Carrito *@
                                         <button type="button"
-                                                onclick="addToCart('@libro.Id', '@Html.Raw(libro.Titulo.Replace("'", "\\'"))', @libro.Precio, '@libro.PortadaUrl')"
+                                                onclick="addToCart('@libro.Id', '@Html.Raw(libro.Titulo.Replace("'", "\\'"))')"
                                                 class="btn btn-primary btn-pill w-100 shadow-sm">
                                             <i class="bi bi-cart-plus me-2"></i>Añadir al carrito
                                         </button>
 
-                                        <a asp-action="Detalles" asp-route-id="@libro.Id" class="btn btn-outline-dark rounded-pill w-100 mt-2">
+                                        @* Corregido: Ruta explícita para asegurar que carguen las reseñas *@
+                                        <a asp-controller="Home" asp-action="Detalles" asp-route-id="@libro.Id" class="btn btn-outline-dark rounded-pill w-100 mt-2">
                                             <i class="bi bi-star-fill text-warning me-1"></i> Ver Reseñas
                                         </a>
                                     </div>
@@ -106,6 +115,7 @@
                     }
                 </div>
 
+                @* Paginación *@
                 @if (ViewBag.TotalPaginas > 1)
                 {
                     <nav class="mt-5">
@@ -131,19 +141,13 @@
         box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
     }
 
-    /* Estilo para los items del menú lateral */
-    .list-group-item {
-        transition: all 0.2s ease;
+    .list-group-item:hover:not(.active) {
+        background-color: #f1f5f9;
+        padding-left: 2rem !important;
     }
 
-        .list-group-item:hover:not(.active) {
-            background-color: var(--azul-claro);
-            padding-left: 2rem !important;
-            color: var(--azul-profundo);
-        }
-
-        .list-group-item.active {
-            background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino)) !important;
-            border-color: transparent !important;
-        }
+    .list-group-item.active {
+        background: linear-gradient(135deg, #0f172a, #1e293b) !important;
+        border-color: transparent !important;
+    }
 </style>
