@@ -480,3 +480,24 @@ footer {
     .hero-section .badge {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
     }
+/* Sobreescritura para elementos dinámicos */
+#cartBadge {
+    background: linear-gradient(135deg, var(--rojo-soft), #C0392B) !important;
+}
+
+/* Ajuste de color para el mensaje del bot (usuario) */
+#botChatBody .bg-primary {
+    background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino)) !important;
+}
+
+/* Estilo para los mensajes del bot (respuesta) */
+#botChatBody .bg-secondary {
+    background-color: var(--azul-claro) !important;
+    color: var(--azul-profundo) !important;
+    border: 1px solid rgba(42, 111, 143, 0.1);
+}
+
+/* Transición suave para el hover del corazón en Deseos */
+.bi-heart, .bi-heart-fill {
+    transition: color 0.3s ease, transform 0.2s ease;
+}

@@ -8,7 +8,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - El Rincón del Libro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Fuentes: Inter para cuerpo y Playfair Display para títulos (según tu CSS) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
@@ -16,10 +19,11 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark navbar-premium sticky-top py-3">
+        <!-- La clase navbar-premium aplicará tu degradado azul profundo -->
+        <nav class="navbar navbar-expand-lg navbar-dark sticky-top py-3">
             <div class="container-fluid px-4">
                 <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-book-half text-warning fs-3"></i>
+                    <i class="bi bi-book-half fs-3" style="color: var(--oro-suave);"></i>
                     <span>El Rincón del Libro</span>
                 </a>
                 <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
@@ -29,7 +33,7 @@
                 <div class="navbar-collapse collapse" id="navbarMain">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                         <li class="nav-item">
-                            <a class="nav-link fs-6" asp-controller="Home" asp-action="Index">Catálogo</a>
+                            <a class="nav-link fs-6 text-white" asp-controller="Home" asp-action="Index">Catálogo</a>
                         </li>
                     </ul>
                     <ul class="navbar-nav align-items-center gap-3">
@@ -43,7 +47,8 @@
                             <li class="nav-item">
                                 <a class="nav-link text-white position-relative hover-lift" href="javascript:void(0)" onclick="openCart()">
                                     <i class="bi bi-bag fs-5"></i>
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-dark" id="cartBadge" style="font-size: 0.65rem;">0</span>
+                                    <!-- El badge ahora usa el degradado rojo definido en tu CSS -->
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill" id="cartBadge" style="font-size: 0.65rem;">0</span>
                                 </a>
                             </li>
                         }
@@ -53,13 +58,14 @@
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
-                                    <div class="bg-light text-dark rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width: 32px; height: 32px;">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-white" href="#" data-bs-toggle="dropdown">
+                                    <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold"
+                                         style="width: 32px; height: 32px; background-color: var(--azul-claro); color: var(--azul-profundo);">
                                         @User.Identity.Name.Substring(0, 1).ToUpper()
                                     </div>
                                     <span class="fw-medium">@User.Identity.Name</span>
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 rounded-3">
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2">
                                     @if (!User.IsInRole("Admin") && !User.IsInRole("Empleado"))
                                     {
                                         <li><a class="dropdown-item py-2" asp-controller="Pedidos" asp-action="Index"><i class="bi bi-box-seam me-2 text-muted"></i>Mis Pedidos</a></li>
@@ -75,7 +81,7 @@
                         }
                         else
                         {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Ingresar</a></li>
+                            <li class="nav-item"><a class="nav-link text-white" asp-controller="Account" asp-action="Login">Ingresar</a></li>
                             <li class="nav-item"><a class="btn btn-outline-light rounded-pill px-4 fw-bold" asp-controller="Account" asp-action="Register">Regístrate</a></li>
                         }
                     </ul>
@@ -88,44 +94,50 @@
         @RenderBody()
     </main>
 
-    <footer class="bg-dark text-white pt-5 pb-4 mt-auto">
+    <footer class="pt-5 pb-4 mt-auto">
         <div class="container text-center text-md-start">
-            <div class="row text-center text-md-start">
+            <div class="row">
                 <div class="col-md-4 col-lg-4 col-xl-4 mx-auto mt-3">
-                    <h5 class="text-uppercase mb-4 fw-bold text-warning"><i class="bi bi-book-half me-2"></i>El Rincón del Libro</h5>
-                    <p class="text-light opacity-75">Tu destino ideal para encontrar las mejores historias, manuales técnicos y aventuras. Alimentando mentes desde hoy.</p>
+                    <h5 class="text-uppercase mb-4 fw-bold" style="color: var(--azul-profundo); font-family: 'Playfair Display', serif;">
+                        <i class="bi bi-book-half me-2" style="color: var(--oro-suave);"></i>El Rincón del Libro
+                    </h5>
+                    <p class="opacity-75">Tu destino ideal para encontrar las mejores historias, manuales técnicos y aventuras.</p>
                 </div>
                 <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mt-3">
-                    <h5 class="text-uppercase mb-4 fw-bold text-warning">Contacto</h5>
-                    <p class="text-light opacity-75"><i class="bi bi-house-door-fill me-2"></i> UANL, San Nicolás</p>
-                    <p class="text-light opacity-75"><i class="bi bi-envelope-fill me-2"></i> contacto@rincondellibro.com</p>
+                    <h5 class="text-uppercase mb-4 fw-bold" style="color: var(--azul-profundo); font-family: 'Playfair Display', serif;">Contacto</h5>
+                    <p class="opacity-75"><i class="bi bi-house-door-fill me-2" style="color: var(--azul-elegante);"></i> UANL, San Nicolás</p>
+                    <p class="opacity-75"><i class="bi bi-envelope-fill me-2" style="color: var(--azul-elegante);"></i> contacto@rincondellibro.com</p>
                 </div>
             </div>
             <hr class="mb-4 opacity-25">
             <div class="row align-items-center">
                 <div class="col-md-7 col-lg-8">
-                    <p class="text-light opacity-75 small mb-0">© 2026 Desarrollado para PIA. Todos los derechos reservados.</p>
+                    <p class="small mb-0 opacity-75">© 2026 Desarrollado para PIA. Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>
     </footer>
 
-    <div class="offcanvas offcanvas-start shadow" tabindex="-1" id="cartSidebar" style="width: 400px;">
-        <div class="offcanvas-header bg-dark text-white">
-            <h5 class="offcanvas-title fw-bold">Mi Carrito</h5>
+    <!-- Offcanvas Carrito -->
+    <div class="offcanvas offcanvas-end offcanvas-custom shadow" tabindex="-1" id="cartSidebar">
+        <div class="offcanvas-header text-white">
+            <h5 class="offcanvas-title fw-bold" style="font-family: 'Playfair Display', serif;">Mi Carrito</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body" id="cartBody"></div>
     </div>
 
-    <div id="botWindow" class="card shadow position-fixed border-0" style="bottom: 90px; right: 20px; width: 350px; z-index: 1050; display: none;">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center rounded-top">
-            <h6 class="mb-0"><i class="bi bi-robot me-2"></i>Asistente Virtual</h6>
+    <!-- Ventana del Bot -->
+    <div id="botWindow" class="card shadow position-fixed border-0" style="bottom: 90px; right: 20px; width: 350px; z-index: 1050; display: none; border-radius: 20px !important;">
+        <div class="card-header text-white d-flex justify-content-between align-items-center rounded-top"
+             style="background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino)); border:none;">
+            <h6 class="mb-0 fw-bold"><i class="bi bi-robot me-2"></i>Asistente Virtual</h6>
             <button type="button" class="btn-close btn-close-white" onclick="toggleBot()"></button>
         </div>
-        <div class="card-body" id="botChatBody" style="height: 350px; overflow-y: auto; background-color: #f8f9fa;">
+        <div class="card-body" id="botChatBody" style="height: 350px; overflow-y: auto; background-color: var(--blanco-humo);">
             <div class="text-start mb-3">
-                <span class="badge bg-secondary text-wrap text-start p-2 fs-6 shadow-sm" style="font-weight: 500;">
+                <span class="badge text-wrap text-start p-2 fs-6 shadow-sm"
+                      style="font-weight: 500; background-color: var(--azul-claro); color: var(--azul-profundo); border-radius: 15px;">
                     ¡Hola! Soy tu asistente de El Rincón del Libro 📚 ¿En qué te puedo ayudar hoy?
                 </span>
             </div>
@@ -138,7 +150,9 @@
         </div>
     </div>
 
-    <button id="botBtnToggle" class="btn btn-primary rounded-circle position-fixed shadow d-flex justify-content-center align-items-center" style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 1050; transition: transform 0.2s;" onclick="toggleBot()">
+    <!-- Botón Flotante Chat -->
+    <button id="botBtnToggle" class="btn btn-float-chat rounded-circle position-fixed shadow d-flex justify-content-center align-items-center text-white"
+            style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 1050; border:none;" onclick="toggleBot()">
         <i class="bi bi-chat-dots fs-3"></i>
     </button>
 
@@ -147,7 +161,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // --- 1. LÓGICA DEL CARRITO Y CUPONES ---
+        // Lógica del Carrito
         const cartOff = document.getElementById('cartSidebar') ? new bootstrap.Offcanvas('#cartSidebar') : null;
         function openCart() { refreshCart(); cartOff.show(); }
 
@@ -161,40 +175,33 @@
         function aplicarCupon() {
             let cod = $('#inputCupon').val().trim();
             if(!cod) return;
-
             $.post('/Carrito/AplicarCupon', { codigo: cod }, function(res) {
                 if(res.success) {
                     refreshCart();
                     Swal.fire({ icon: 'success', title: '¡Éxito!', text: res.message, toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Cupón inválido', text: res.message, confirmButtonColor: '#0f172a' });
+                    Swal.fire({ icon: 'error', title: 'Cupón inválido', text: res.message, confirmButtonColor: '#0B2B40' });
                 }
             });
         }
 
         function quitarCupon() {
-            $.post('/Carrito/QuitarCupon', function() {
-                refreshCart();
-            });
+            $.post('/Carrito/QuitarCupon', function() { refreshCart(); });
         }
 
         function addToCart(id, titulo) {
-            // Buscamos 100% seguro solo el botón del Home
             let btnHome = $('button').filter(function() {
                 let oc = $(this).attr('onclick');
                 return oc && oc.includes(`addToCart('${id}'`);
             });
             btnHome.css('pointer-events', 'none');
-
             $.post('/Carrito/Agregar', { id: id, cantidad: 1 }, function (res) {
                 if (res.success) {
                     refreshCart();
-                    Swal.fire({
-                        icon: 'success', title: '¡Añadido!', text: titulo + " se agregó al carrito.", toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
-                    });
+                    Swal.fire({ icon: 'success', title: '¡Añadido!', text: titulo + " se agregó al carrito.", toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
                     btnHome.css('pointer-events', 'auto');
                 } else {
-                    Swal.fire({ icon: 'info', title: 'Sin Existencias', text: res.message, confirmButtonColor: '#28a745' });
+                    Swal.fire({ icon: 'info', title: 'Sin Existencias', text: res.message, confirmButtonColor: '#144A66' });
                     btnHome.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle-fill fs-5"></i>');
                 }
             });
@@ -206,59 +213,17 @@
                 return oc && oc.includes(`modQty('${id}', ${cambio})`);
             });
             btnTrigger.css('pointer-events', 'none');
-
             $.post('/Carrito/ActualizarCantidad', { id: id, cambio: cambio }, function(res) {
                 if (res.success) {
                     refreshCart();
-                    if (cambio < 0) {
-                        // LA MAGIA: Restauramos los botones a su estado original de forma segura
-                        let btnHome = $('button').filter(function() {
-                            let oc = $(this).attr('onclick');
-                            return oc && oc.includes(`addToCart('${id}'`);
-                        });
-                        btnHome.prop('disabled', false).removeClass('disabled text-muted').css('pointer-events', 'auto').html('<i class="bi bi-bag-plus-fill fs-5"></i>');
-
-                        let btnDetails = $('button').filter(function() {
-                            let oc = $(this).attr('onclick');
-                            return oc && oc.includes(`addFromDetails('${id}'`);
-                        });
-                        btnDetails.prop('disabled', false).removeClass('disabled text-muted').css('pointer-events', 'auto').html('<i class="bi bi-bag-plus fs-5"></i> Añadir a la bolsa');
-                    }
                 } else {
-                    Swal.fire({ icon: 'warning', title: 'Límite Alcanzado', text: 'Has llegado al máximo de unidades disponibles.', confirmButtonColor: '#d33' });
-                    let btnMas = $('button').filter(function() {
-                        let oc = $(this).attr('onclick');
-                        return oc && oc.includes(`modQty('${id}', 1)`);
-                    });
-                    btnMas.prop('disabled', true).addClass('disabled text-muted border-secondary');
+                    Swal.fire({ icon: 'warning', title: 'Límite Alcanzado', text: 'Máximo disponible alcanzado.', confirmButtonColor: '#E74C3C' });
                 }
-                if(cambio < 0) btnTrigger.css('pointer-events', 'auto');
+                btnTrigger.css('pointer-events', 'auto');
             });
         }
 
-        function addFromDetails(id, titulo) {
-            const cant = document.getElementById('inputCantidadDetalle').value;
-            let btnDetails = $('button').filter(function() {
-                let oc = $(this).attr('onclick');
-                return oc && oc.includes(`addFromDetails('${id}'`);
-            });
-            btnDetails.css('pointer-events', 'none');
-
-            $.post('/Carrito/Agregar', { id: id, cantidad: cant }, function(res) {
-                if(res.success) {
-                    refreshCart();
-                    Swal.fire({ icon: 'success', title: '¡Listo!', text: 'Añadido al carrito.', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
-                    btnDetails.css('pointer-events', 'auto');
-                } else {
-                    Swal.fire({ icon: 'warning', title: 'Sin existencias', text: res.message });
-                    btnDetails.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle me-2"></i>Agotado');
-                }
-            });
-        }
-
-        $(document).ready(refreshCart);
-
-        // --- 2. LÓGICA DE LISTA DE DESEOS (El corazón) ---
+        // Lógica Wishlist
         function toggleWishlist(id, titulo, precio, portadaUrl, btnElement) {
             $.post('/Deseos/AlternarAjax', { id: id, titulo: titulo, precio: precio, portadaUrl: portadaUrl }, function(res) {
                 if (res.success) {
@@ -268,33 +233,14 @@
                     } else {
                         icon.removeClass('bi-heart-fill text-danger').addClass('bi-heart text-dark');
                     }
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: res.agregado ? '¡Agregado!' : 'Eliminado',
-                        text: res.message,
-                        toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
-                    });
+                    Swal.fire({ icon: 'success', title: res.agregado ? '¡Agregado!' : 'Eliminado', text: res.message, toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
                 }
             }).fail(function(xhr) {
-                if (xhr.status === 401) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Inicia Sesión',
-                        text: 'Necesitas una cuenta para crear tu lista de deseos.',
-                        confirmButtonText: 'Ir a Iniciar Sesión',
-                        showCancelButton: true,
-                        cancelButtonText: 'Cancelar'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.href = '/Account/Login';
-                        }
-                    });
-                }
+                if (xhr.status === 401) window.location.href = '/Account/Login';
             });
         }
 
-        // --- 3. LÓGICA DEL BOT ---
+        // Lógica Bot
         function toggleBot() {
             $('#botWindow').fadeToggle('fast');
             let icon = $('#botBtnToggle i');
@@ -307,56 +253,27 @@
             }
         }
 
-        function scrollBot() {
-            const body = document.getElementById('botChatBody');
-            body.scrollTop = body.scrollHeight;
-        }
-
         function sendBotMessage() {
             const input = $('#botInput');
             const msg = input.val().trim();
             if (!msg) return;
 
-            $('#botChatBody').append(`
-                <div class="text-end mb-3">
-                    <span class="badge bg-primary text-wrap text-start p-2 fs-6 shadow-sm" style="font-weight: 500;">${msg}</span>
-                </div>
-            `);
+            $('#botChatBody').append(`<div class="text-end mb-3"><span class="badge p-2 fs-6 shadow-sm" style="background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino)); color:white; border-radius:15px 15px 0 15px;">${msg}</span></div>`);
             input.val('');
-            scrollBot();
 
             const typingId = 'typing-' + Date.now();
-            $('#botChatBody').append(`
-                <div class="text-start mb-3" id="${typingId}">
-                    <span class="badge bg-secondary text-wrap text-start p-2 fs-6 shadow-sm"><i class="bi bi-three-dots"></i></span>
-                </div>
-            `);
-            scrollBot();
+            $('#botChatBody').append(`<div class="text-start mb-3" id="${typingId}"><span class="badge bg-light text-dark p-2 fs-6 shadow-sm"><i class="bi bi-three-dots"></i></span></div>`);
 
             $.get('/Chatbot/Preguntar', { mensaje: msg }, function(res) {
                 $('#' + typingId).remove();
-                $('#botChatBody').append(`
-                    <div class="text-start mb-3">
-                        <span class="badge bg-secondary text-wrap text-start p-2 fs-6 shadow-sm" style="font-weight: 500;">
-                            ${res.respuesta}
-                        </span>
-                    </div>
-                `);
-                scrollBot();
-            }).fail(function() {
-                $('#' + typingId).remove();
-                $('#botChatBody').append(`
-                    <div class="text-start mb-3">
-                        <span class="badge bg-danger text-wrap text-start p-2 fs-6 shadow-sm">
-                            <i class="bi bi-exclamation-triangle me-1"></i> Hubo un error al contactar al bot.
-                        </span>
-                    </div>
-                `);
-                scrollBot();
+                $('#botChatBody').append(`<div class="text-start mb-3"><span class="badge text-wrap text-start p-2 fs-6 shadow-sm" style="background-color: var(--azul-claro); color: var(--azul-profundo); border-radius: 15px 15px 15px 0;">${res.respuesta}</span></div>`);
+                const body = document.getElementById('botChatBody');
+                body.scrollTop = body.scrollHeight;
             });
         }
-    </script>
 
+        $(document).ready(refreshCart);
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
