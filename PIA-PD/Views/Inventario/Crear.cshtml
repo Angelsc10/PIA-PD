@@ -6,9 +6,11 @@
 <div class="container mt-5 mb-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <div class="card shadow border-0 p-4">
+            <div class="card p-4">
                 <div class="text-center mb-4 border-bottom pb-3">
-                    <h3 class="fw-bold text-success"><i class="bi bi-journal-plus me-2"></i>Registro de Libro</h3>
+                    <h3 class="fw-bold" style="color: var(--azul-profundo);">
+                        <i class="bi bi-journal-plus me-2 icon-azul"></i>Registro de Libro
+                    </h3>
                 </div>
 
                 <form asp-action="Crear" method="post">
@@ -49,18 +51,21 @@
                         </div>
                     </div>
 
-                    <div class="p-3 bg-light rounded border mb-4">
-                        <h6 class="fw-bold mb-3"><i class="bi bi-image text-primary me-2"></i>Imagen de Portada</h6>
+                    <div class="p-3 mb-4" style="background: var(--azul-claro); border-radius: 20px;">
+                        <h6 class="fw-bold mb-3" style="color: var(--azul-elegante);">
+                            <i class="bi bi-image me-2"></i>Imagen de Portada
+                        </h6>
                         <div class="form-floating">
                             <input asp-for="PortadaUrl" class="form-control" placeholder="URL de la imagen" />
                             <label asp-for="PortadaUrl">Pega el link de la imagen aquí</label>
-                            <div class="form-text mt-2 small text-muted">Ej: https://m.media-amazon.com/images/I/...jpg</div>
                         </div>
+                        <div class="form-text mt-2 small text-muted">Ej: https://m.media-amazon.com/images/I/...jpg</div>
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
-                        <button type="submit" class="btn btn-success rounded-pill px-4 shadow-sm">Guardar Libro</button>
+                        <a asp-action="Index" class="btn btn-volver px-4">Cancelar</a>
+
+                        <button type="submit" class="btn btn-primary px-4">Guardar Libro</button>
                     </div>
                 </form>
             </div>
