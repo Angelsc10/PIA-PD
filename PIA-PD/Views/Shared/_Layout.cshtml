@@ -2,6 +2,17 @@
 @using PIA_PD.Extensions
 @inject IHttpContextAccessor HttpContextAccessor
 
+@{
+    // Especificaciones de visibilidad: Ocultar en ventana de empleado, admin, iniciar sesión o registrar
+    bool esAdminOEmpleado = User.IsInRole("Admin") || User.IsInRole("Empleado");
+
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    bool esPaginaAuth = (controller == "Account" && (action == "Login" || action == "Register"));
+
+    bool mostrarChatbot = !esAdminOEmpleado && !esPaginaAuth;
+}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,7 +20,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - El Rincón del Libro</title>
 
-    <!-- Fuentes: Inter para cuerpo y Playfair Display para títulos (según tu CSS) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -19,7 +29,6 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header>
-        <!-- La clase navbar-premium aplicará tu degradado azul profundo -->
         <nav class="navbar navbar-expand-lg navbar-dark sticky-top py-3">
             <div class="container-fluid px-4">
                 <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
@@ -47,7 +56,6 @@
                             <li class="nav-item">
                                 <a class="nav-link text-white position-relative hover-lift" href="javascript:void(0)" onclick="openCart()">
                                     <i class="bi bi-bag fs-5"></i>
-                                    <!-- El badge ahora usa el degradado rojo definido en tu CSS -->
                                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill" id="cartBadge" style="font-size: 0.65rem;">0</span>
                                 </a>
                             </li>
@@ -94,11 +102,9 @@
         @RenderBody()
     </main>
 
-    <!-- FOOTER SIMPLIFICADO Y PROFESIONAL -->
     <footer class="text-white py-5 mt-auto" style="background: linear-gradient(135deg, var(--azul-profundo) 0%, var(--azul-marino) 100%); border-top: 3px solid var(--oro-suave);">
         <div class="container">
             <div class="row g-4 align-items-center">
-                <!-- Columna Marca e Identidad -->
                 <div class="col-lg-6 col-md-12 text-center text-lg-start">
                     <h5 class="text-uppercase mb-3 fw-bold d-flex align-items-center justify-content-center justify-content-lg-start gap-2" style="font-family: 'Playfair Display', serif;">
                         <i class="bi bi-book-half" style="color: var(--oro-suave);"></i>
@@ -116,7 +122,6 @@
                     </div>
                 </div>
 
-                <!-- Columna Contacto Directo -->
                 <div class="col-lg-6 col-md-12 text-center text-lg-end">
                     <h6 class="text-uppercase mb-3 fw-bold" style="font-family: 'Playfair Display', serif; color: var(--oro-suave);">Contacto Directo</h6>
                     <div class="small opacity-75">
@@ -161,7 +166,6 @@
         }
     </style>
 
-    <!-- Offcanvas Carrito -->
     <div class="offcanvas offcanvas-end offcanvas-custom shadow" tabindex="-1" id="cartSidebar">
         <div class="offcanvas-header text-white">
             <h5 class="offcanvas-title fw-bold" style="font-family: 'Playfair Display', serif;">Mi Carrito</h5>
@@ -170,34 +174,35 @@
         <div class="offcanvas-body" id="cartBody"></div>
     </div>
 
-    <!-- Ventana del Bot -->
-    <div id="botWindow" class="card shadow position-fixed border-0" style="bottom: 90px; right: 20px; width: 350px; z-index: 1050; display: none; border-radius: 20px !important;">
-        <div class="card-header text-white d-flex justify-content-between align-items-center rounded-top"
-             style="background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino)); border:none;">
-            <h6 class="mb-0 fw-bold"><i class="bi bi-robot me-2"></i>Asistente Virtual</h6>
-            <button type="button" class="btn-close btn-close-white" onclick="toggleBot()"></button>
-        </div>
-        <div class="card-body" id="botChatBody" style="height: 350px; overflow-y: auto; background-color: var(--blanco-humo);">
-            <div class="text-start mb-3">
-                <span class="badge text-wrap text-start p-2 fs-6 shadow-sm"
-                      style="font-weight: 500; background-color: var(--azul-claro); color: var(--azul-profundo); border-radius: 15px;">
-                    ¡Hola! Soy tu asistente de El Rincón del Libro 📚 ¿En qué te puedo ayudar hoy?
-                </span>
+    @if (mostrarChatbot)
+    {
+        <div id="botWindow" class="card shadow position-fixed border-0" style="bottom: 90px; right: 20px; width: 350px; z-index: 1050; display: none; border-radius: 20px !important;">
+            <div class="card-header text-white d-flex justify-content-between align-items-center rounded-top"
+                 style="background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino)); border:none;">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-robot me-2"></i>Asistente Virtual</h6>
+                <button type="button" class="btn-close btn-close-white" onclick="toggleBot()"></button>
+            </div>
+            <div class="card-body" id="botChatBody" style="height: 350px; overflow-y: auto; background-color: var(--blanco-humo);">
+                <div class="text-start mb-3">
+                    <span class="badge text-wrap text-start p-2 fs-6 shadow-sm"
+                          style="font-weight: 500; background-color: var(--azul-claro); color: var(--azul-profundo); border-radius: 15px;">
+                        ¡Hola! Soy tu asistente de El Rincón del Libro 📚 ¿En qué te puedo ayudar hoy?
+                    </span>
+                </div>
+            </div>
+            <div class="card-footer p-2 bg-white rounded-bottom border-top">
+                <div class="input-group">
+                    <input type="text" id="botInput" class="form-control" placeholder="Escribe tu mensaje..." onkeypress="if(event.key === 'Enter') sendBotMessage()">
+                    <button class="btn btn-primary" onclick="sendBotMessage()"><i class="bi bi-send"></i></button>
+                </div>
             </div>
         </div>
-        <div class="card-footer p-2 bg-white rounded-bottom border-top">
-            <div class="input-group">
-                <input type="text" id="botInput" class="form-control" placeholder="Escribe tu mensaje..." onkeypress="if(event.key === 'Enter') sendBotMessage()">
-                <button class="btn btn-primary" onclick="sendBotMessage()"><i class="bi bi-send"></i></button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Botón Flotante Chat -->
-    <button id="botBtnToggle" class="btn btn-float-chat rounded-circle position-fixed shadow d-flex justify-content-center align-items-center text-white"
-            style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 1050; border:none;" onclick="toggleBot()">
-        <i class="bi bi-chat-dots fs-3"></i>
-    </button>
+        <button id="botBtnToggle" class="btn btn-float-chat rounded-circle position-fixed shadow d-flex justify-content-center align-items-center text-white"
+                style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 1050; border:none;" onclick="toggleBot()">
+            <i class="bi bi-chat-dots fs-3"></i>
+        </button>
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -285,14 +290,16 @@
 
         // Lógica Bot
         function toggleBot() {
-            $('#botWindow').fadeToggle('fast');
-            let icon = $('#botBtnToggle i');
-            if (icon.hasClass('bi-chat-dots')) {
-                icon.removeClass('bi-chat-dots').addClass('bi-x-lg');
-                $('#botBtnToggle').css('transform', 'rotate(90deg)');
-            } else {
-                icon.removeClass('bi-x-lg').addClass('bi-chat-dots');
-                $('#botBtnToggle').css('transform', 'rotate(0deg)');
+            if ($('#botWindow').length) {
+                $('#botWindow').fadeToggle('fast');
+                let icon = $('#botBtnToggle i');
+                if (icon.hasClass('bi-chat-dots')) {
+                    icon.removeClass('bi-chat-dots').addClass('bi-x-lg');
+                    $('#botBtnToggle').css('transform', 'rotate(90deg)');
+                } else {
+                    icon.removeClass('bi-x-lg').addClass('bi-chat-dots');
+                    $('#botBtnToggle').css('transform', 'rotate(0deg)');
+                }
             }
         }
 
