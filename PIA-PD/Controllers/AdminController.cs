@@ -107,6 +107,7 @@ namespace PIA_PD.Controllers
             {
                 var nuevoEmpleado = new IdentityUser { UserName = username, Email = "" };
                 var result = await _userManager.CreateAsync(nuevoEmpleado, password);
+
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(nuevoEmpleado, "Empleado");
@@ -166,41 +167,50 @@ namespace PIA_PD.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportarExcel()
         {
-            var ventas = await _context.Ventas.Include(v => v.Detalles).OrderByDescending(v => v.Fecha).ToListAsync();
-            using (var workbook = new XLWorkbook())
+            try
             {
-                var worksheet = workbook.Worksheets.Add("Reporte de Ventas");
-                var currentRow = 1;
-
-                worksheet.Cell(currentRow, 1).Value = "Folio de Venta";
-                worksheet.Cell(currentRow, 2).Value = "Fecha y Hora";
-                worksheet.Cell(currentRow, 3).Value = "Cliente";
-                worksheet.Cell(currentRow, 4).Value = "Total de Artículos";
-                worksheet.Cell(currentRow, 5).Value = "Total Pagado (MXN)";
-
-                var rangoCabecera = worksheet.Range(currentRow, 1, currentRow, 5);
-                rangoCabecera.Style.Fill.BackgroundColor = XLColor.DarkBlue;
-                rangoCabecera.Style.Font.FontColor = XLColor.White;
-                rangoCabecera.Style.Font.Bold = true;
-
-                foreach (var venta in ventas)
+                var ventas = await _context.Ventas.Include(v => v.Detalles).OrderByDescending(v => v.Fecha).ToListAsync();
+                using (var workbook = new XLWorkbook())
                 {
-                    currentRow++;
-                    worksheet.Cell(currentRow, 1).Value = $"#{venta.Id}";
-                    worksheet.Cell(currentRow, 2).Value = venta.Fecha.ToString("dd/MM/yyyy HH:mm");
-                    worksheet.Cell(currentRow, 3).Value = venta.Usuario;
-                    worksheet.Cell(currentRow, 4).Value = venta.Detalles.Sum(d => d.Cantidad);
-                    worksheet.Cell(currentRow, 5).Value = venta.Total;
-                    worksheet.Cell(currentRow, 5).Style.NumberFormat.Format = "$ #,##0.00";
-                }
+                    var worksheet = workbook.Worksheets.Add("Reporte de Ventas");
+                    var currentRow = 1;
 
-                worksheet.Columns().AdjustToContents();
-                using (var stream = new MemoryStream())
-                {
+                    worksheet.Cell(currentRow, 1).Value = "Folio de Venta";
+                    worksheet.Cell(currentRow, 2).Value = "Fecha y Hora";
+                    worksheet.Cell(currentRow, 3).Value = "Cliente";
+                    worksheet.Cell(currentRow, 4).Value = "Total de Artículos";
+                    worksheet.Cell(currentRow, 5).Value = "Total Pagado (MXN)";
+
+                    var rangoCabecera = worksheet.Range(currentRow, 1, currentRow, 5);
+                    rangoCabecera.Style.Fill.BackgroundColor = XLColor.DarkBlue;
+                    rangoCabecera.Style.Font.FontColor = XLColor.White;
+                    rangoCabecera.Style.Font.Bold = true;
+
+                    foreach (var venta in ventas)
+                    {
+                        currentRow++;
+                        worksheet.Cell(currentRow, 1).Value = $"#{venta.Id}";
+                        worksheet.Cell(currentRow, 2).Value = venta.Fecha.ToString("dd/MM/yyyy HH:mm");
+                        worksheet.Cell(currentRow, 3).Value = venta.Usuario;
+                        worksheet.Cell(currentRow, 4).Value = venta.Detalles.Sum(d => d.Cantidad);
+                        worksheet.Cell(currentRow, 5).Value = venta.Total;
+                        worksheet.Cell(currentRow, 5).Style.NumberFormat.Format = "$ #,##0.00";
+                    }
+
+                    worksheet.Columns().AdjustToContents();
+
+                    // Enviamos el Stream directamente al Framework MVC para evitar caídas si se cancela la conexión
+                    var stream = new MemoryStream();
                     workbook.SaveAs(stream);
-                    var content = stream.ToArray();
-                    return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Reporte_Ventas_{DateTime.Now:ddMMyyyy}.xlsx");
+                    stream.Position = 0;
+
+                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Reporte_Ventas_{DateTime.Now:ddMMyyyy}.xlsx");
                 }
+            }
+            catch (Exception)
+            {
+                // Si la conexión se aborta porque el usuario cancela, redirigimos en silencio sin tumbar el server.
+                return RedirectToAction(nameof(Ventas));
             }
         }
     }

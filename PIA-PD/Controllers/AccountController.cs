@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using PIA_PD.Models;
+using System.Text.Json;
 
 namespace PIA_PD.Controllers
 {
@@ -25,7 +27,8 @@ namespace PIA_PD.Controllers
                 return Json(new { success = false, errors = new[] { "Por favor, completa los campos requeridos." } });
 
             var user = await _userManager.FindByNameAsync(model.UserName)
-                       ?? await _userManager.FindByEmailAsync(model.UserName);
+                       ??
+                       await _userManager.FindByEmailAsync(model.UserName);
 
             if (user == null)
                 return Json(new { success = false, errors = new[] { "Error: Este nombre de usuario no existe en el sistema." } });
@@ -34,6 +37,31 @@ namespace PIA_PD.Controllers
 
             if (result.Succeeded)
             {
+                // --- INICIO: Lógica para transferir el carrito anónimo a la cuenta del usuario ---
+                var sessionAnonCart = HttpContext.Session.GetString("anon:MiCarrito");
+                if (!string.IsNullOrEmpty(sessionAnonCart))
+                {
+                    var userCartKey = $"{user.UserName.Trim().ToLowerInvariant()}:MiCarrito";
+                    var userCartStr = HttpContext.Session.GetString(userCartKey);
+
+                    var anonCart = JsonSerializer.Deserialize<List<CarritoItem>>(sessionAnonCart);
+                    var userCart = !string.IsNullOrEmpty(userCartStr)
+                        ? JsonSerializer.Deserialize<List<CarritoItem>>(userCartStr)
+                        : new List<CarritoItem>();
+
+                    // Combinar carritos por si el usuario ya tenía cosas guardadas previamente
+                    foreach (var item in anonCart)
+                    {
+                        var existing = userCart.FirstOrDefault(x => x.LibroId == item.LibroId);
+                        if (existing != null) existing.Cantidad += item.Cantidad;
+                        else userCart.Add(item);
+                    }
+
+                    HttpContext.Session.SetString(userCartKey, JsonSerializer.Serialize(userCart));
+                    HttpContext.Session.Remove("anon:MiCarrito"); // Limpiamos el carrito anónimo
+                }
+                // --- FIN: Lógica de transferencia ---
+
                 var roles = await _userManager.GetRolesAsync(user);
                 string url = (roles.Contains("Admin") || roles.Contains("Empleado"))
                              ? Url.Action("Index", "Admin")
@@ -68,6 +96,7 @@ namespace PIA_PD.Controllers
             foreach (var error in result.Errors)
             {
                 string msgError = error.Description;
+
                 if (error.Code == "DuplicateUserName") msgError = $"El usuario '{model.UserName}' ya está registrado. Por favor, elige otro.";
                 else if (error.Code == "PasswordTooShort") msgError = "Tu contraseña es muy corta. Debe tener al menos 6 caracteres.";
                 else if (error.Code == "PasswordRequiresNonAlphanumeric") msgError = "La contraseña debe contener al menos un carácter especial (ej. @, #, !).";

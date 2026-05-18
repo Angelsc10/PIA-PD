@@ -1,15 +1,11 @@
 ﻿@using Microsoft.AspNetCore.Http
-@using PIA_PD.Extensions
 @inject IHttpContextAccessor HttpContextAccessor
-
 @{
     var action = ViewContext.RouteData.Values["action"]?.ToString();
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
-
     bool esAdminOEmpleado = User.IsInRole("Admin") || User.IsInRole("Empleado");
     bool esPaginaAuth = controller == "Account" && (action == "Login" || action == "Register");
     bool esPaginaInicio = controller == "Home" && action == "Index";
-
     // El chatbot solo se muestra si es la página de inicio, NO es admin/empleado y NO es página de auth
     bool mostrarChatbot = esPaginaInicio && !esAdminOEmpleado && !esPaginaAuth;
 }
@@ -20,16 +16,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - El Rincón del Libro</title>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-
     <style>
         .filter-white {
             filter: brightness(0) invert(1);
@@ -61,12 +54,8 @@
                 <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-
                 <div class="navbar-collapse collapse" id="navbarMain">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
-                        <li class="nav-item">
-                            <a class="nav-link fs-6 text-white" asp-controller="Home" asp-action="Index">Catálogo</a>
-                        </li>
                     </ul>
                     <ul class="navbar-nav align-items-center gap-3">
                         @if (!esAdminOEmpleado)
@@ -79,7 +68,7 @@
                             <li class="nav-item">
                                 <a class="nav-link text-white position-relative hover-lift" href="javascript:void(0)" onclick="openCart()">
                                     <i class="bi bi-bag fs-5"></i>
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill" id="cartBadge" style="font-size: 0.65rem;">0</span>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" id="cartBadge" style="font-size: 0.65rem; padding: 0.35em 0.5em; min-width: 1.8em; text-align: center;">0</span>
                                 </a>
                             </li>
                         }
@@ -90,21 +79,28 @@
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-white" href="#" data-bs-toggle="dropdown">
-                                    <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold"
-                                         style="width: 32px; height: 32px; background-color: var(--azul-claro); color: var(--azul-profundo);">
-                                        @User.Identity.Name[..1].ToUpper()
-                                    </div>
-                                    <span class="fw-medium">@User.Identity.Name</span>
+                                    <i class="bi bi-person-circle fs-5" style="color: var(--oro-suave);"></i>
+                                    <span class="fw-bold">@User.Identity.Name</span>
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2">
-                                    @if (!esAdminOEmpleado)
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-3">
+                                    @if (esAdminOEmpleado)
+                                    {
+                                        <li><a class="dropdown-item py-2" asp-controller="Admin" asp-action="Index"><i class="bi bi-speedometer2 me-2 text-muted"></i>Panel Admin</a></li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Inventario" asp-action="Index"><i class="bi bi-box-seam me-2 text-muted"></i>Inventario</a></li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ventas"><i class="bi bi-receipt me-2 text-muted"></i>Ventas</a></li>
+                                        if (User.IsInRole("Admin"))
+                                        {
+                                            <li><a class="dropdown-item py-2" asp-controller="Admin" asp-action="Empleados"><i class="bi bi-people me-2 text-muted"></i>Empleados</a></li>
+                                        }
+                                    }
+                                    else
                                     {
                                         <li><a class="dropdown-item py-2" asp-controller="Pedidos" asp-action="Index"><i class="bi bi-box-seam me-2 text-muted"></i>Mis Pedidos</a></li>
-                                        <li><hr class="dropdown-divider"></li>
                                     }
+                                    <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <form asp-controller="Account" asp-action="Logout" method="post">
-                                            <button type="submit" class="dropdown-item py-2 text-danger fw-medium"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</button>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                            <button type="submit" class="dropdown-item text-danger py-2"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</button>
                                         </form>
                                     </li>
                                 </ul>
@@ -112,8 +108,8 @@
                         }
                         else
                         {
-                            <li class="nav-item"><a class="nav-link text-white" asp-controller="Account" asp-action="Login">Ingresar</a></li>
-                            <li class="nav-item"><a class="btn btn-outline-light rounded-pill px-4 fw-bold" asp-controller="Account" asp-action="Register">Regístrate</a></li>
+                            <li class="nav-item"><a class="btn btn-outline-light rounded-pill px-4" asp-controller="Account" asp-action="Login">Ingresar</a></li>
+                            <li class="nav-item"><a class="btn btn-light text-dark fw-bold rounded-pill px-4" asp-controller="Account" asp-action="Register">Regístrate</a></li>
                         }
                     </ul>
                 </div>
@@ -125,87 +121,104 @@
         @RenderBody()
     </main>
 
-    <footer class="text-white py-5 mt-auto" style="background: linear-gradient(135deg, var(--azul-profundo) 0%, var(--azul-marino) 100%); border-top: 3px solid var(--oro-suave);">
-        <div class="container">
-            <div class="row g-4 align-items-center">
-                <div class="col-lg-6 col-md-12 text-center text-lg-start">
-                    <h5 class="text-uppercase mb-3 fw-bold d-flex align-items-center justify-content-center justify-content-lg-start gap-2" style="font-family: 'Playfair Display', serif;">
-                        <i class="bi bi-book-half" style="color: var(--oro-suave);"></i>
-                        <span style="background: linear-gradient(120deg, #FFFFFF, #C5DEE8); -webkit-background-clip: text; background-clip: text; color: transparent;">
-                            El Rincón del Libro
-                        </span>
-                    </h5>
-                    <p class="small opacity-75 mb-0" style="max-width: 450px; line-height: 1.6;">
-                        Tu destino literario premium. Nos apasiona conectar historias con lectores, ofreciendo una curaduría excepcional de obras para mentes curiosas.
-                    </p>
-                    <div class="d-flex gap-3 mt-4 justify-content-center justify-content-lg-start">
-                        <a href="#" class="text-white opacity-75 hover-lift"><i class="bi bi-facebook fs-5"></i></a>
-                        <a href="#" class="text-white opacity-75 hover-lift"><i class="bi bi-instagram fs-5"></i></a>
-                        <a href="#" class="text-white opacity-75 hover-lift"><i class="bi bi-twitter-x fs-5"></i></a>
+    @if (!esAdminOEmpleado)
+    {
+        <footer class="text-white py-5 mt-auto" style="background: linear-gradient(135deg, var(--azul-profundo) 0%, var(--azul-marino) 100%); border-top: 3px solid var(--oro-suave);">
+            <div class="container">
+                <div class="row g-4 align-items-center">
+                    <div class="col-lg-6 col-md-12 text-center text-lg-start">
+                        <h5 class="text-uppercase mb-3 fw-bold d-flex align-items-center justify-content-center justify-content-lg-start gap-2" style="font-family: 'Playfair Display', serif;">
+                            <i class="bi bi-book-half" style="color: var(--oro-suave);"></i>
+                            <span style="background: linear-gradient(120deg, #FFFFFF, #C5DEE8); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                                El Rincón del Libro
+                            </span>
+                        </h5>
+                        <p class="small opacity-75 mb-0" style="max-width: 450px; line-height: 1.6;">
+                            Tu destino literario premium. Nos apasiona conectar historias con lectores, ofreciendo una curaduría excepcional de obras para mentes curiosas.
+                        </p>
+                        <div class="d-flex gap-3 mt-4 justify-content-center justify-content-lg-start">
+                            <a href="#" class="text-white opacity-75 hover-lift"><i class="bi bi-facebook fs-5"></i></a>
+                            <a href="#" class="text-white opacity-75 hover-lift"><i class="bi bi-instagram fs-5"></i></a>
+                            <a href="#" class="text-white opacity-75 hover-lift"><i class="bi bi-twitter-x fs-5"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 col-md-12 text-center text-lg-end">
+                        <h6 class="text-uppercase mb-3 fw-bold" style="font-family: 'Playfair Display', serif; color: var(--oro-suave);">Contacto Directo</h6>
+                        <div class="d-flex flex-column gap-2 small opacity-75">
+                            <p class="mb-0"><i class="bi bi-geo-alt-fill me-2"></i>Av. Universidad S/N, San Nicolás de los Garza</p>
+                            <p class="mb-0"><i class="bi bi-telephone-fill me-2"></i>+52 81 1234 5678</p>
+                            <p class="mb-0"><i class="bi bi-envelope-fill me-2"></i>contacto@rincondellibro.com</p>
+                        </div>
+                        <div class="mt-4">
+                            <i class="bi bi-paypal fs-2 me-3 opacity-50" title="Pago Seguro con PayPal"></i>
+                            <i class="bi bi-credit-card fs-2 opacity-50" title="Tarjetas Aceptadas"></i>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-lg-6 col-md-12 text-center text-lg-end">
-                    <h6 class="text-uppercase mb-3 fw-bold" style="font-family: 'Playfair Display', serif; color: var(--oro-suave);">Contacto Directo</h6>
-                    <div class="small opacity-75">
-                        <p class="mb-2"><i class="bi bi-geo-alt-fill me-2" style="color: var(--oro-suave);"></i> Av. Universidad, San Nicolás de los Garza, NL</p>
-                        <p class="mb-2"><i class="bi bi-envelope-fill me-2" style="color: var(--oro-suave);"></i> contacto@rincondellibro.com</p>
-                        <p class="mb-0"><i class="bi bi-telephone-fill me-2" style="color: var(--oro-suave);"></i> +52 (81) 1234 5678</p>
+                <hr class="my-4 opacity-25" style="border-color: var(--oro-suave);">
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center small opacity-75">
+                    <p class="mb-2 mb-md-0">&copy; 2026 El Rincón del Libro. Todos los derechos reservados.</p>
+                    <div class="d-flex gap-3">
+                        <a asp-controller="Home" asp-action="Privacy" class="text-white text-decoration-none hover-lift">Política de Privacidad</a>
+                        <a href="#" class="text-white text-decoration-none hover-lift">Términos de Servicio</a>
                     </div>
                 </div>
             </div>
+        </footer>
+    }
+    else
+    {
+        <footer class="text-white py-3 mt-auto text-center" style="background-color: var(--azul-profundo);">
+            <div class="container small opacity-75">
+                &copy; 2026 Panel de Administración - El Rincón del Libro
+            </div>
+        </footer>
+    }
 
-            <hr class="my-4 opacity-25">
-
-            <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start">
-                    <p class="small mb-0 opacity-50">
-                        &copy; 2026 El Rincón del Libro. Todos los derechos reservados.
-                    </p>
-                </div>
-                <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
-                    <span class="small opacity-50 me-3">Pagos Seguros:</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" height="18" class="me-3 opacity-75 filter-white">
-                    <i class="bi bi-credit-card-2-back fs-4 opacity-75 v-align-middle"></i>
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas" aria-labelledby="cartOffcanvasLabel" style="width: 400px; border-left: none; box-shadow: -5px 0 15px rgba(0,0,0,0.1);">
+        <div class="offcanvas-header text-white py-3" style="background: linear-gradient(135deg, var(--azul-profundo), var(--azul-marino)); border-bottom: 3px solid var(--oro-suave);">
+            <h5 class="offcanvas-title fw-bold d-flex align-items-center gap-2" id="cartOffcanvasLabel">
+                <i class="bi bi-cart3 fs-4" style="color: var(--oro-suave);"></i> Mi Compra
+            </h5>
+            <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body bg-light p-0 d-flex flex-column" id="cartContainer">
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
                 </div>
             </div>
         </div>
-    </footer>
-
-    <div class="offcanvas offcanvas-end offcanvas-custom shadow" tabindex="-1" id="cartSidebar">
-        <div class="offcanvas-header text-white">
-            <h5 class="offcanvas-title fw-bold" style="font-family: 'Playfair Display', serif;">Mi Carrito</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
-        </div>
-        <div class="offcanvas-body" id="cartBody"></div>
     </div>
 
     @if (mostrarChatbot)
     {
-        <div id="botWindow" class="card shadow position-fixed border-0" style="bottom: 90px; right: 20px; width: 350px; z-index: 1050; display: none; border-radius: 20px !important;">
-            <div class="card-header text-white d-flex justify-content-between align-items-center rounded-top"
-                 style="background: linear-gradient(135deg, var(--azul-elegante), var(--azul-marino)); border:none;">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-robot me-2"></i>Asistente Virtual</h6>
-                <button type="button" class="btn-close btn-close-white" onclick="toggleBot()"></button>
+        <div id="botWindow" class="card shadow position-fixed border-0" style="bottom: 90px; left: 20px; width: 350px; z-index: 1040; display:none; border-radius: 15px; overflow: hidden;">
+            <div class="card-header text-white fw-bold d-flex justify-content-between align-items-center p-3" style="background: linear-gradient(135deg, var(--azul-profundo), var(--azul-marino));">
+                <span><i class="bi bi-robot me-2 icon-oro"></i>Asistente Virtual</span>
+                <button type="button" class="btn-close btn-close-white" onclick="toggleBot()" style="font-size: 0.8rem;"></button>
             </div>
-            <div class="card-body" id="botChatBody" style="height: 350px; overflow-y: auto; background-color: var(--blanco-humo);">
+            <div class="card-body bg-light" id="botChatBody" style="height: 350px; overflow-y: auto;">
                 <div class="text-start mb-3">
-                    <span class="badge text-wrap text-start p-2 fs-6 shadow-sm"
-                          style="font-weight: 500; background-color: var(--azul-claro); color: var(--azul-profundo); border-radius: 15px;">
-                        ¡Hola! Soy tu asistente de El Rincón del Libro 📚 ¿En qué te puedo ayudar hoy?
+                    <span class="badge text-wrap text-start p-2 fs-6 shadow-sm" style="background-color: var(--azul-claro); color: var(--azul-profundo); border-radius: 15px 15px 15px 0;">
+                        ¡Hola! Soy el asistente de la librería. Dime el nombre o palabra del libro que estás buscando.
                     </span>
                 </div>
             </div>
-            <div class="card-footer p-2 bg-white rounded-bottom border-top">
+            <div class="card-footer bg-white border-top-0 p-3">
                 <div class="input-group">
-                    <input type="text" id="botInput" class="form-control" placeholder="Escribe tu mensaje..." onkeypress="if(event.key === 'Enter') sendBotMessage()">
-                    <button class="btn btn-primary" onclick="sendBotMessage()"><i class="bi bi-send"></i></button>
+                    <input type="text" id="botInput" class="form-control rounded-pill border-end-0 shadow-sm" placeholder="Escribe un título..." style="background-color: var(--blanco-humo);" onkeypress="if(event.key === 'Enter') sendBotMessage()">
+                    <button class="btn rounded-pill border-start-0 shadow-sm" style="background-color: var(--blanco-humo); color: var(--azul-elegante);" onclick="sendBotMessage()">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <button id="botBtnToggle" class="btn btn-float-chat rounded-circle position-fixed shadow d-flex justify-content-center align-items-center text-white"
-                style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 1050; border:none;" onclick="toggleBot()">
+        <button id="botBtnToggle" class="btn btn-float-chat rounded-circle position-fixed shadow d-flex justify-content-center align-items-center text-white" style="bottom: 20px; left: 20px; width: 60px; height: 60px; z-index: 1050; border:none; background: linear-gradient(135deg, var(--azul-elegante), var(--azul-profundo)); transition: var(--transition);" onclick="toggleBot()">
             <i class="bi bi-chat-dots fs-3"></i>
         </button>
     }
@@ -213,93 +226,122 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>
-        // Elementos Cacheables para JavaScript
-        const $cartBody = $('#cartBody');
-        const $cartBadge = $('#cartBadge');
-        const $botChatBody = $('#botChatBody');
-        const $botWindow = $('#botWindow');
-        const $botBtnToggle = $('#botBtnToggle');
+        // Actualiza el número global de la bolsa del nav
+        function updateBadgeGlobal(count) {
+            $('#cartBadge').text(count);
+        }
 
-        const cartOff = document.getElementById('cartSidebar') ? new bootstrap.Offcanvas('#cartSidebar') : null;
+        // Abre el panel lateral del carrito
+        function openCart() {
+            var cartCanvas = new bootstrap.Offcanvas(document.getElementById('cartOffcanvas'));
+            cartCanvas.show();
+            refreshCart();
+        }
 
-        function openCart() { refreshCart(); cartOff?.show(); }
-
+        // Recarga el HTML del carrito y extrae la cantidad del input hidden
         function refreshCart() {
             $.get('/Carrito/GetCarritoPartial', function(data) {
-                $cartBody.html(data);
-                $cartBadge.text($('#cartItemCount').val() || 0);
-            });
-        }
-
-        function aplicarCupon() {
-            let cod = $('#inputCupon').val().trim();
-            if(!cod) return;
-            $.post('/Carrito/AplicarCupon', { codigo: cod }, function(res) {
-                if(res.success) {
-                    refreshCart();
-                    Swal.fire({ icon: 'success', title: '¡Éxito!', text: res.message, toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
+                $('#cartContainer').html(data);
+                let totalItems = $('#cartItemCount').val();
+                if (totalItems) {
+                    updateBadgeGlobal(totalItems);
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Cupón inválido', text: res.message, confirmButtonColor: '#0B2B40' });
-                }
-            });
-        }
-
-        function quitarCupon() {
-            $.post('/Carrito/QuitarCupon', function() { refreshCart(); });
-        }
-
-        function addToCart(id, titulo) {
-            let btnHome = $('button').filter(function() {
-                let oc = $(this).attr('onclick');
-                return oc && oc.includes(`addToCart('${id}'`);
-            });
-            btnHome.css('pointer-events', 'none');
-            $.post('/Carrito/Agregar', { id: id, cantidad: 1 }, function (res) {
-                if (res.success) {
-                    refreshCart();
-                    Swal.fire({ icon: 'success', title: '¡Añadido!', text: titulo + " se agregó al carrito.", toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
-                    btnHome.css('pointer-events', 'auto');
-                } else {
-                    Swal.fire({ icon: 'info', title: 'Sin Existencias', text: res.message, confirmButtonColor: '#144A66' });
-                    btnHome.prop('disabled', true).addClass('disabled text-muted').html('<i class="bi bi-x-circle-fill fs-5"></i>');
+                    updateBadgeGlobal(0);
                 }
             });
         }
 
         function modQty(id, cambio) {
-            let btnTrigger = $('button').filter(function() {
-                let oc = $(this).attr('onclick');
-                return oc && oc.includes(`modQty('${id}', ${cambio})`);
-            });
-            btnTrigger.css('pointer-events', 'none');
             $.post('/Carrito/ActualizarCantidad', { id: id, cambio: cambio }, function(res) {
                 if (res.success) {
                     refreshCart();
                 } else {
-                    Swal.fire({ icon: 'warning', title: 'Límite Alcanzado', text: 'Máximo disponible alcanzado.', confirmButtonColor: '#E74C3C' });
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Stock Límite',
+                        text: res.message,
+                        toast: true,
+                        position: 'top-end',
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
                 }
-                btnTrigger.css('pointer-events', 'auto');
             });
         }
 
-        function toggleWishlist(id, titulo, precio, portadaUrl, btnElement) {
+        function aplicarCupon() {
+            const code = $('#inputCupon').val().trim();
+            if(!code) return;
+            $.post('/Carrito/AplicarCupon', { codigo: code }, function(res) {
+                if(res.success) {
+                    refreshCart();
+                    Swal.fire({ icon: 'success', title: '¡Genial!', text: res.message, toast:true, position: 'top-end', timer: 3000, showConfirmButton: false });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Ups', text: res.message, toast:true, position: 'top-end', timer: 3000, showConfirmButton: false });
+                }
+            });
+        }
+
+        function quitarCupon() {
+            $.post('/Carrito/QuitarCupon', function() {
+                refreshCart();
+            });
+        }
+
+        // --- Agregar al carrito sin abrir Offcanvas ---
+        window.addToCart = function(id, titulo) {
+            $.post('/Carrito/Agregar', { id: id, cantidad: 1 }, function(res) {
+                if(res.success) {
+                    refreshCart();
+                    Swal.fire({
+                        icon: res.alertaStock ? 'info' : 'success',
+                        title: res.alertaStock ? 'Límite de stock' : '¡Agregado!',
+                        text: res.message || (titulo + ' se añadió al carrito.'),
+                        toast: true,
+                        position: 'top-end',
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lo sentimos',
+                        text: res.message,
+                        confirmButtonColor: 'var(--azul-elegante)'
+                    });
+                }
+            });
+        }
+
+        // --- Lista de Deseos (AJAX) ---
+        window.toggleWishlist = function(id, titulo, precio, portadaUrl, btnElement) {
             $.post('/Deseos/AlternarAjax', { id: id, titulo: titulo, precio: precio, portadaUrl: portadaUrl }, function(res) {
-                if (res.success) {
+                if(res.success) {
                     let icon = $(btnElement).find('i');
-                    if (res.agregado) {
-                        icon.removeClass('bi-heart text-dark').addClass('bi-heart-fill text-danger');
+                    if(res.agregado) {
+                        icon.removeClass('bi-heart icon-azul').addClass('bi-heart-fill');
                     } else {
-                        icon.removeClass('bi-heart-fill text-danger').addClass('bi-heart text-dark');
+                        icon.removeClass('bi-heart-fill').addClass('bi-heart icon-azul');
                     }
-                    Swal.fire({ icon: 'success', title: res.agregado ? '¡Agregado!' : 'Eliminado', text: res.message, toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
+                    Swal.fire({
+                        icon: res.agregado ? 'success' : 'info',
+                        title: res.agregado ? '¡Agregado!' : 'Eliminado',
+                        text: res.message,
+                        toast: true,
+                        position: 'top-end',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
                 }
             }).fail(function(xhr) {
                 if (xhr.status === 401) window.location.href = '/Account/Login';
             });
         }
 
+        // --- Control del Chatbot ---
         function toggleBot() {
             if ($botWindow.length) {
                 $botWindow.fadeToggle('fast');
@@ -333,8 +375,17 @@
             });
         }
 
-        $(document).ready(refreshCart);
+        // Variables globales para el chatbot
+        var $botWindow, $botBtnToggle, $botChatBody;
+
+        $(document).ready(function() {
+            $botWindow = $('#botWindow');
+            $botBtnToggle = $('#botBtnToggle');
+            $botChatBody = $('#botChatBody');
+            refreshCart();
+        });
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

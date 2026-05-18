@@ -9,34 +9,28 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ticket #@Model.Id - El Rincón del Libro</title>
+    <title>Ticket_@Model.Id</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        /* Variables integradas de tu site.css */
-        :root {
-            --azul-profundo: #1a2a6c; /* Ajusta este valor al exacto de tu site.css */
-            --azul-elegante: #283e7a;
-            --azul-claro: #e8f0fe;
-        }
+    <link rel="stylesheet" href="~/css/site.css" />
 
+    <style>
         body {
-            background-color: #f0f2f5;
+            background-color: var(--blanco-humo);
             font-family: 'Courier New', Courier, monospace;
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            padding: 40px 0;
             margin: 0;
-            padding: 20px;
         }
 
         .ticket-contenedor {
-            background-color: #fff;
+            background-color: white;
             width: 100%;
             max-width: 380px;
             padding: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            /* Borde superior usando tu azul profundo */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 8px;
             border-top: 10px solid var(--azul-profundo);
         }
 
@@ -112,27 +106,25 @@
         }
 
         @@media print {
-            body
+            body {
+                background-color: white;
+            }
 
-        {
-            background-color: white;
-        }
+            .ticket-contenedor {
+                box-shadow: none;
+                border-top: 10px solid black;
+            }
 
-        .ticket-contenedor {
-            box-shadow: none;
-            border-top: 10px solid black;
-        }
-
-        .botones-accion {
-            display: none !important;
-        }
-
+            .botones-accion {
+                display: none !important;
+            }
         }
     </style>
 </head>
 <body>
 
     <div class="ticket-contenedor">
+
         <div class="ticket-header">
             <i class="bi bi-book-half" style="font-size: 40px; color: var(--azul-profundo);"></i>
             <h2>EL RINCÓN DEL LIBRO</h2>
@@ -141,9 +133,11 @@
         </div>
 
         <div class="linea-separadora"></div>
+
         <p><strong>FECHA:</strong> @Model.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
         <p><strong>FOLIO:</strong> #@Model.Id.ToString("000000")</p>
         <p><strong>CLIENTE:</strong> @Model.Usuario</p>
+
         <div class="linea-separadora"></div>
 
         <table class="tabla-productos">
@@ -180,26 +174,28 @@
         </div>
 
         <div style="text-align: center; margin-top: 20px;">
-            <svg id="barcode"></svg>
+            <svg id="barcode" style="width: 100%; max-width: 250px; height: auto;"></svg>
         </div>
+
     </div>
 
     <div class="botones-accion">
         <a href="/" class="btn btn-volver"><i class="bi bi-arrow-left" style="margin-right:8px;"></i> Tienda</a>
-        <button onclick="window.print()" class="btn btn-imprimir"><i class="bi bi-printer-fill" style="margin-right:8px;"></i> Imprimir</button>
+        <button onclick="window.print()" class="btn btn-imprimir"><i class="bi bi-printer" style="margin-right:8px;"></i> Imprimir</button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
     <script>
-        JsBarcode("#barcode", "@Model.Id.ToString("0000000000")", {
-            format: "CODE128",
-            width: 2,
-            height: 50,
-            displayValue: true,
-            fontSize: 14,
-            background: "transparent",
-            lineColor: "#1a2a6c" // Color del código de barras a juego
+        document.addEventListener("DOMContentLoaded", function() {
+            JsBarcode("#barcode", "100" + "@Model.Id.ToString("000000")", {
+                format: "CODE128",
+                lineColor: "#000",
+                width: 2,
+                height: 40,
+                displayValue: false
+            });
         });
     </script>
+
 </body>
 </html>
