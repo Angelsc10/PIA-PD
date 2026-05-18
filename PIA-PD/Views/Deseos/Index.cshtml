@@ -28,7 +28,7 @@
             {
                 <div class="col">
                     <div class="card h-100 position-relative">
-                        
+
                         <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
                             <form asp-action="Eliminar" method="post">
                                 @Html.AntiForgeryToken()
@@ -40,7 +40,7 @@
                         </div>
 
                         <div class="text-center p-3">
-                            <img src="@deseo.PortadaUrl" class="img-fluid rounded shadow-sm" 
+                            <img src="@deseo.PortadaUrl" class="img-fluid rounded shadow-sm"
                                  style="height: 220px; object-fit: contain; background: var(--gris-sutil);">
                         </div>
 
@@ -51,11 +51,9 @@
                             <div class="mt-auto">
                                 <h5 class="fw-bold mb-3 icon-azul">$@deseo.Precio.ToString("0.00")</h5>
 
-                                <form asp-controller="Carrito" asp-action="Agregar" method="post">
+                                <form class="form-compra-directa" asp-controller="Carrito" asp-action="Agregar" method="post">
                                     <input type="hidden" name="id" value="@deseo.LibroId" />
-                                    <input type="hidden" name="titulo" value="@deseo.Titulo" />
-                                    <input type="hidden" name="precio" value="@deseo.Precio" />
-                                    <input type="hidden" name="portadaUrl" value="@deseo.PortadaUrl" />
+                                    <input type="hidden" name="cantidad" value="1" />
                                     <button type="submit" class="btn btn-primary w-100 py-2">
                                         <i class="bi bi-cart-plus me-1"></i> Comprar
                                     </button>
@@ -70,7 +68,7 @@
 </div>
 
 <style>
-    /* Estilo único para el botón de cerrar que no interfiere con tus botones globales */
+    
     .btn-eliminar-discreto {
         background: rgba(255, 255, 255, 0.9);
         border: none;
@@ -87,13 +85,13 @@
         backdrop-filter: blur(4px);
     }
 
-    .btn-eliminar-discreto:hover {
-        background: var(--rojo-soft);
-        color: white;
-        transform: rotate(90deg) scale(1.1);
-    }
+        .btn-eliminar-discreto:hover {
+            background: var(--rojo-soft);
+            color: white;
+            transform: rotate(90deg) scale(1.1);
+        }
 
-    /* Ajuste fino para las imágenes en la lista de deseos */
+    
     .card img {
         transition: transform 0.4s ease;
     }
@@ -102,3 +100,30 @@
         transform: scale(1.05);
     }
 </style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('.form-compra-directa').on('submit', function (e) {
+            e.preventDefault(); // Detiene el comportamiento clásico de recarga
+
+            let form = $(this);
+            let btn = form.find('button[type="submit"]');
+            btn.prop('disabled', true); // Evita múltiples clicks
+
+            // Envía los datos al Carrito/Agregar para meter el libro en la sesión
+            $.post(form.attr('action'), form.serialize(), function (res) {
+                if (res.success) {
+                    // Si se insertó bien en el carrito interno de sesión, redirige inmediatamente a la ventana de datos
+                    window.location.href = '@Url.Action("Checkout", "Carrito")';
+                } else {
+                    alert(res.message || "Ocurrió un error al procesar la compra.");
+                    btn.prop('disabled', false);
+                }
+            }).fail(function() {
+                alert("Error de conexión al procesar la compra.");
+                btn.prop('disabled', false);
+            });
+        });
+    });
+</script>
